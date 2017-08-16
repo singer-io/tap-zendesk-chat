@@ -1,0 +1,56 @@
+{
+  "properties": {
+    "name": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "channel": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "conversion": {
+      "$ref": "#/definitions/chat_conversion"
+    },
+    "timestamp": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "msg": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "nick": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "type": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "options": {
+      "type": [
+        "null",
+        "string"
+      ]
+    }
+  },
+  "type": [
+    "null",
+    "object"
+  ],
+  "definitions": {
+    "chat_conversion": "FILLED IN by tap-zendesk-chat"
+  }
+}

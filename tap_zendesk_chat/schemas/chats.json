@@ -1,0 +1,167 @@
+{
+  "properties": {
+    "department_id": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "comment": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "missed": {
+      "type": [
+        "null",
+        "boolean"
+      ]
+    },
+    "rating": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "conversions": {
+      "items": {
+        "$ref": "#/definitions/chat_conversion"
+      },
+      "type": [
+        "null",
+        "array"
+      ]
+    },
+    "type": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "webpath": {
+      "items": {
+        "$ref": "#/definitions/chat_webpath"
+      },
+      "type": [
+        "null",
+        "array"
+      ]
+    },
+    "triggered": {
+      "type": [
+        "null",
+        "boolean"
+      ]
+    },
+    "unread": {
+      "type": [
+        "null",
+        "boolean",
+        "integer"
+      ]
+    },
+    "timestamp": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "response_time": {
+      "$ref": "#/definitions/chat_response_time"
+    },
+    "session": {
+      "$ref": "#/definitions/chat_session"
+    },
+    "history": {
+      "items": {
+        "$ref": "#/definitions/chat_history"
+      },
+      "type": [
+        "null",
+        "array"
+      ]
+    },
+    "agent_names": {
+      "items": {
+        "type": [
+          "string"
+        ]
+      },
+      "type": [
+        "null",
+        "array"
+      ]
+    },
+    "tags": {
+      "items": {
+        "type": [
+          "string"
+        ]
+      },
+      "type": [
+        "null",
+        "array"
+      ]
+    },
+    "visitor": {
+      "$ref": "#/definitions/chat_visitor"
+    },
+    "started_by": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "triggered_response": {
+      "type": [
+        "null"
+      ]
+    },
+    "id": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "count": {
+      "$ref": "#/definitions/chat_count"
+    },
+    "agent_ids": {
+      "items": {
+        "type": [
+          "string"
+        ]
+      },
+      "type": [
+        "null",
+        "array"
+      ]
+    },
+    "department_name": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "duration": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    }
+  },
+  "type": [
+    "null",
+    "object"
+  ],
+  "definitions": {
+    "chat_conversion": "FILLED IN by tap-zendesk-chat",
+    "chat_count": "FILLED IN by tap-zendesk-chat",
+    "chat_history": "FILLED IN by tap-zendesk-chat",
+    "chat_response_time": "FILLED IN by tap-zendesk-chat",
+    "chat_session": "FILLED IN by tap-zendesk-chat",
+    "chat_visitor": "FILLED IN by tap-zendesk-chat",
+    "chat_webpath": "FILLED IN by tap-zendesk-chat"
+  }
+}
