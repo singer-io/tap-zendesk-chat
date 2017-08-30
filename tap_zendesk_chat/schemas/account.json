@@ -130,7 +130,12 @@
           "type": [
             "null",
             "number"
-          ]
+          ],
+          "minimum": -10e32,
+          "maximum": 10e32,
+          "multipleOf": 10e-6,
+          "exclusiveMinimum": true,
+          "exclusiveMaximum": true
         },
         "rest_api": {
           "type": [
