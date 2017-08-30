@@ -1,7 +1,7 @@
 from singer import metrics
 import pendulum
 import time
-import datetime
+from datetime import datetime, timedelta
 from requests.exceptions import HTTPError
 from singer.utils import strftime
 import attr
@@ -27,7 +27,7 @@ class Puller(object):
         return self.state["bookmarks"][self.tap_stream_id]
 
     def _set_last_updated(self, key, updated_at):
-        if isinstance(updated_at, datetime.datetime):
+        if isinstance(updated_at, datetime):
             updated_at = updated_at.isoformat()
         self._bookmark[key] = updated_at
 
@@ -54,7 +54,7 @@ class Agents(Puller):
             }
             page = self.client.request(self.tap_stream_id, params)
             if not page:
-                self._bookmark.pop("since_id")
+                self._bookmark.pop("since_id", None)
                 break
             since_id = page[-1]["id"] + 1
             self._bookmark["since_id"] = since_id
@@ -76,12 +76,25 @@ class Chats(Puller):
         return self.client.request(
             self.tap_stream_id, params=params, url_extra="/search")
 
-    def pull(self, chat_type, ts_field):
+    def _pull(self, chat_type, ts_field, *, full_sync):
+        """Pulls and yields pages of data for the given chat_type, where
+        chat_type can be either "chat" or "offline_msg".
+
+        ts_field determines the property of the chat objects that is used as
+        the bookmark for the chat.
+
+        full_sync is a boolean indicating whether or not to pull all chats
+        based on the "start_date" in the config. When this is true, all
+        bookmarks for this chat type will be ignored.
+        """
         ts_bookmark_key = chat_type + "_ts"
         url_bookmark_key = chat_type + "_next_url"
+        if full_sync:
+            self._bookmark.pop(ts_bookmark_key, None)
+            self._bookmark.pop(url_bookmark_key, None)
         ts = self._update_start_state(ts_bookmark_key)
-        max_ts = ts
         next_url = self._bookmark.get(url_bookmark_key)
+        max_ts = ts
         while True:
             if next_url:
                 search = self.client.request(self.tap_stream_id, url=next_url)
@@ -98,9 +111,15 @@ class Chats(Puller):
         self._set_last_updated(ts_bookmark_key, max_ts)
 
     def yield_pages(self):
-        for page in chain(self.pull("chat", "end_timestamp"),
-                          self.pull("offline_msg", "timestamp")):
+        full_sync_days = timedelta(days=self.config.get("chats_full_sync_days", 7))
+        last_full_sync = self._bookmark.get("chats_last_full_sync")
+        full_sync = not last_full_sync or \
+            pendulum.parse(last_full_sync) + full_sync_days <= datetime.utcnow()
+        for page in chain(self._pull("chat", "end_timestamp", full_sync=full_sync),
+                          self._pull("offline_msg", "timestamp", full_sync=full_sync)):
             yield page
+        if full_sync:
+            self._bookmark["chats_last_full_sync"] = datetime.utcnow().isoformat()
 
 
 @attr.s
