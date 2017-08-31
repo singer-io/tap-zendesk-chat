@@ -3,7 +3,6 @@ import pendulum
 import time
 from datetime import datetime, timedelta
 from requests.exceptions import HTTPError
-from singer.utils import strftime
 import attr
 import json
 from itertools import chain

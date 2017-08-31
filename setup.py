@@ -9,7 +9,7 @@ setup(name="tap-zendesk-chat",
       classifiers=["Programming Language :: Python :: 3 :: Only"],
       py_modules=["tap_zendesk_chat"],
       install_requires=[
-          "singer-python>=2.1.4",
+          "singer-python>=3.2.0",
           "requests",
           "backoff",
           "attrs",

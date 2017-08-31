@@ -26,7 +26,7 @@
     },
     "conversions": {
       "items": {
-        "$ref": "#/definitions/chat_conversion"
+        "$ref": "chat_conversion"
       },
       "type": [
         "null",
@@ -41,7 +41,7 @@
     },
     "webpath": {
       "items": {
-        "$ref": "#/definitions/chat_webpath"
+        "$ref": "chat_webpath"
       },
       "type": [
         "null",
@@ -68,14 +68,14 @@
       ]
     },
     "response_time": {
-      "$ref": "#/definitions/chat_response_time"
+      "$ref": "chat_response_time"
     },
     "session": {
-      "$ref": "#/definitions/chat_session"
+      "$ref": "chat_session"
     },
     "history": {
       "items": {
-        "$ref": "#/definitions/chat_history"
+        "$ref": "chat_history"
       },
       "type": [
         "null",
@@ -105,7 +105,7 @@
       ]
     },
     "visitor": {
-      "$ref": "#/definitions/chat_visitor"
+      "$ref": "chat_visitor"
     },
     "started_by": {
       "type": [
@@ -125,7 +125,7 @@
       ]
     },
     "count": {
-      "$ref": "#/definitions/chat_count"
+      "$ref": "chat_count"
     },
     "agent_ids": {
       "items": {
@@ -155,13 +155,13 @@
     "null",
     "object"
   ],
-  "definitions": {
-    "chat_conversion": "FILLED IN by tap-zendesk-chat",
-    "chat_count": "FILLED IN by tap-zendesk-chat",
-    "chat_history": "FILLED IN by tap-zendesk-chat",
-    "chat_response_time": "FILLED IN by tap-zendesk-chat",
-    "chat_session": "FILLED IN by tap-zendesk-chat",
-    "chat_visitor": "FILLED IN by tap-zendesk-chat",
-    "chat_webpath": "FILLED IN by tap-zendesk-chat"
-  }
+  "tap_schema_dependencies": [
+    "chat_conversion",
+    "chat_count",
+    "chat_history",
+    "chat_response_time",
+    "chat_session",
+    "chat_visitor",
+    "chat_webpath"
+  ]
 }

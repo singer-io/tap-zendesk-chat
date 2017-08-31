@@ -13,7 +13,7 @@
       ]
     },
     "conversion": {
-      "$ref": "#/definitions/chat_conversion"
+      "$ref": "chat_conversion"
     },
     "timestamp": {
       "type": [
@@ -50,7 +50,7 @@
     "null",
     "object"
   ],
-  "definitions": {
-    "chat_conversion": "FILLED IN by tap-zendesk-chat"
-  }
+  "tap_schema_dependencies": [
+    "chat_conversion"
+  ]
 }
