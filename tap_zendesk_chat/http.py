@@ -24,6 +24,8 @@ class ZendeskChatClient(object):
         with metrics.http_request_timer(tap_stream_id) as timer:
             url = url or BASE_URL + "/api/v2/" + tap_stream_id + url_extra
             headers = {"Authorization": "Bearer " + self.access_token}
+            if self.user_agent:
+                headers["User-Agent"] = self.user_agent
             request = requests.Request("GET", url, headers=headers, params=params)
             response = self.session.send(request.prepare())
             timer.tags[metrics.Tag.http_status_code] = response.status_code
