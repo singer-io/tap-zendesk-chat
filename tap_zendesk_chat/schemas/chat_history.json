@@ -44,6 +44,24 @@
         "null",
         "string"
       ]
+    },
+    "department_id": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "department_name": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "msg_id": {
+      "type": [
+        "null",
+        "string"
+      ]
     }
   },
   "type": [

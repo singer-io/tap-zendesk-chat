@@ -60,6 +60,18 @@
         "string"
       ]
     },
+    "referrer_search_terms": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "referrer_search_engine": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
     "zendesk_ticket_id": {
       "type": [
         "null",
@@ -80,11 +92,22 @@
       ],
       "format": "date-time"
     },
+    "end_timestamp": {
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "date-time"
+    },
     "response_time": {
       "$ref": "chat_response_time"
     },
     "session": {
-      "$ref": "chat_session"
+        "type": [
+          "null",
+          "object"
+        ],
+        "additionalProperties": true
     },
     "history": {
       "items": {
@@ -174,7 +197,6 @@
     "chat_count",
     "chat_history",
     "chat_response_time",
-    "chat_session",
     "chat_visitor",
     "chat_webpath"
   ]
