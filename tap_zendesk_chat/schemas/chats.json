@@ -54,6 +54,18 @@
         "boolean"
       ]
     },
+    "message": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "zendesk_ticket_id": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
     "unread": {
       "type": [
         "null",
@@ -65,7 +77,8 @@
       "type": [
         "null",
         "string"
-      ]
+      ],
+      "format": "date-time"
     },
     "response_time": {
       "$ref": "chat_response_time"
@@ -151,6 +164,7 @@
       ]
     }
   },
+  "additionalProperties": false,
   "type": [
     "null",
     "object"

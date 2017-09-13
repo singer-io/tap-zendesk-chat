@@ -70,7 +70,8 @@ def main():
         discover().dump()
         print()
     else:
-        catalog = args.properties if args.properties else discover()
+        catalog = Catalog.from_dict(args.properties) \
+            if args.properties else discover()
         ctx = Context(args.config, args.state, catalog)
         sync(ctx)
 

@@ -28,23 +28,22 @@ class Stream(object):
     def format_response(self, response):
         return [response] if type(response) != list else response
 
-    def format_and_write(self, response):
+    def write_page(self, page):
         """Formats a list of records in place and outputs the data to
         stdout."""
-        page = self.format_response(response)
         singer.write_records(self.tap_stream_id, page)
         self.metrics(page)
 
 
 class Everything(Stream):
     def sync(self, ctx):
-        self.format_and_write(ctx.client.request(self.tap_stream_id))
+        self.write_page(ctx.client.request(self.tap_stream_id))
 
 
 class Agents(Stream):
     def sync(self, ctx):
-        since_id_bookmark = [self.tap_stream_id, "since_id"]
-        since_id = ctx.bookmark(since_id_bookmark) or 0
+        since_id_offset = [self.tap_stream_id, "offset", "id"]
+        since_id = ctx.bookmark(since_id_offset) or 0
         while True:
             params = {
                 "since_id": since_id,
@@ -52,13 +51,13 @@ class Agents(Stream):
             }
             page = ctx.client.request(self.tap_stream_id, params)
             if not page:
-                ctx.set_bookmark(since_id_bookmark, None)
-                ctx.write_state()
                 break
-            self.format_and_write(page)
+            self.write_page(page)
             since_id = page[-1]["id"] + 1
-            ctx.set_bookmark(since_id_bookmark, since_id)
+            ctx.set_bookmark(since_id_offset, since_id)
             ctx.write_state()
+        ctx.set_bookmark(since_id_offset, None)
+        ctx.write_state()
 
 
 class Chats(Stream):
@@ -67,7 +66,7 @@ class Chats(Stream):
             return []
         params = {"ids": ",".join(chat_ids)}
         body = ctx.client.request(self.tap_stream_id, params=params)
-        return body["docs"].values()
+        return list(body["docs"].values())
 
     def _search(self, ctx, chat_type, ts_field, dt):
         params = {
@@ -87,65 +86,68 @@ class Chats(Stream):
         based on the "start_date" in the config. When this is true, all
         bookmarks for this chat type will be ignored.
         """
-        ts_bookmark_key = [self.tap_stream_id, chat_type + "_ts"]
-        url_bookmark_key = [self.tap_stream_id, chat_type + "_next_url"]
+        ts_bookmark_key = [self.tap_stream_id, chat_type + "." + ts_field]
+        url_offset_key = [self.tap_stream_id, "offset", chat_type + ".next_url"]
         if full_sync:
             ctx.set_bookmark(ts_bookmark_key, None)
-            ctx.set_bookmark(url_bookmark_key, None)
-        ts = ctx.update_start_date_bookmark(ts_bookmark_key)
-        next_url = ctx.bookmark(url_bookmark_key)
-        max_ts = ts
+            ctx.set_bookmark(url_offset_key, None)
+        start_time = ctx.update_start_date_bookmark(ts_bookmark_key)
+        next_url = ctx.bookmark(url_offset_key)
+        max_bookmark = start_time
         while True:
             if next_url:
                 search = ctx.client.request(self.tap_stream_id, url=next_url)
             else:
-                search = self._search(ctx, chat_type, ts_field, ts)
+                search = self._search(ctx, chat_type, ts_field, start_time)
             next_url = search["next_url"]
-            ctx.set_bookmark(url_bookmark_key, next_url)
+            ctx.set_bookmark(url_offset_key, next_url)
             ctx.write_state()
             chat_ids = [r["id"] for r in search["results"]]
             chats = self._bulk_chats(ctx, chat_ids)
-            max_ts = max(max_ts, *[c[ts_field] for c in chats])
-            self.format_and_write(chats)
+            if chats:
+                self.write_page(chats)
+                max_bookmark = max(max_bookmark, *[c[ts_field] for c in chats])
             if not next_url:
                 break
-        ctx.set_bookmark(ts_bookmark_key, max_ts)
+        ctx.set_bookmark(ts_bookmark_key, max_bookmark)
         ctx.write_state()
 
     def sync(self, ctx):
         full_sync_days = timedelta(days=ctx.config.get("chats_full_sync_days", 7))
-        last_sync_bookmark = [self.tap_stream_id, "chats_last_full_sync"]
-        last_full_sync = ctx.bookmark(last_sync_bookmark)
+        last_full_sync = ctx.state.get("chats_last_full_sync")
         full_sync = not last_full_sync or \
             pendulum.parse(last_full_sync) + full_sync_days <= datetime.utcnow()
         self._pull(ctx, "chat", "end_timestamp", full_sync=full_sync),
         self._pull(ctx, "offline_msg", "timestamp", full_sync=full_sync)
         if full_sync:
-            ctx.set_bookmark(last_sync_bookmark, datetime.utcnow().isoformat())
+            ctx.state["chats_last_full_sync"] = datetime.utcnow().isoformat()
             ctx.write_state()
 
 
-class Triggers(Everything):
-    def format_response(self, response):
-        for trigger in response:
+class Triggers(Stream):
+    def sync(self, ctx):
+        page = ctx.client.request(self.tap_stream_id)
+        for trigger in page:
             definition = trigger["definition"]
             for k in ["condition", "actions"]:
                 definition[k] = json.dumps(definition[k])
-        return response
+        self.write_page(page)
 
 
-class Bans(Everything):
-    def format_response(self, response):
-        return response["visitor"] + response["ip_address"]
+class Bans(Stream):
+    def sync(self, ctx):
+        response = ctx.client.request(self.tap_stream_id)
+        page = response["visitor"] + response["ip_address"]
+        self.write_page(page)
 
 
-class Account(Everything):
+class Account(Stream):
     def sync(self, ctx):
         # The account endpoint is restricted to zopim accounts, meaning
         # integrated Zendesk accounts will get a 403 for this endpoint. As a
         # result, we will have to just ignore a 403 and not output any data.
         try:
-            super().sync(ctx)
+            self.write_page([ctx.client.request(self.tap_stream_id)])
         except HTTPError as e:
             if e.response.status_code == 403:
                 LOGGER.info("Ignoring 403 from accounts endpoint - I assume "

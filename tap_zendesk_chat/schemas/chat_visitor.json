@@ -33,5 +33,6 @@
   "type": [
     "null",
     "object"
-  ]
+  ],
+  "additionalProperties": false
 }

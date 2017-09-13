@@ -29,7 +29,7 @@ class Client(object):
             request = requests.Request("GET", url, headers=headers, params=params)
             response = self.session.send(request.prepare())
             timer.tags[metrics.Tag.http_status_code] = response.status_code
-        if response.status_code == 429:
+        if response.status_code in [429, 502]:
             raise RateLimitException()
         response.raise_for_status()
         return response.json()
