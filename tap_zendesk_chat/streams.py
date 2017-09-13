@@ -5,77 +5,75 @@ from datetime import datetime, timedelta
 from requests.exceptions import HTTPError
 import attr
 import json
-from itertools import chain
-from .http import ZendeskChatClient
+import singer
 
 
-class Puller(object):
-    def prepare(self, config, state, tap_stream_id):
-        self.config = config
-        self.state = state
+class Stream(object):
+    """Information about and functions for syncing streams.
+
+    Important class properties:
+
+    :var tap_stream_id:
+    :var pk_fields: A list of primary key fields"""
+    def __init__(self, tap_stream_id, pk_fields):
         self.tap_stream_id = tap_stream_id
-        self.client = ZendeskChatClient(config)
-        return self
+        self.pk_fields = pk_fields
 
-    @property
-    def _bookmark(self):
-        if "bookmarks" not in self.state:
-            self.state["bookmarks"] = {}
-        if self.tap_stream_id not in self.state["bookmarks"]:
-            self.state["bookmarks"][self.tap_stream_id] = {}
-        return self.state["bookmarks"][self.tap_stream_id]
+    def metrics(self, page):
+        with metrics.record_counter(self.tap_stream_id) as counter:
+            counter.increment(len(page))
 
-    def _set_last_updated(self, key, updated_at):
-        if isinstance(updated_at, datetime):
-            updated_at = updated_at.isoformat()
-        self._bookmark[key] = updated_at
+    def format_response(self, response):
+        return [response] if type(response) != list else response
 
-    def _update_start_state(self, key):
-        if not self._bookmark.get(key):
-            self._set_last_updated(key, self.config["start_date"])
-        return self._bookmark[key]
+    def format_and_write(self, response):
+        """Formats a list of records in place and outputs the data to
+        stdout."""
+        page = self.format_response(response)
+        singer.write_records(self.tap_stream_id, page)
+        self.metrics(page)
 
 
-class Everything(Puller):
-    def yield_pages(self):
-        page = self.client.request(self.tap_stream_id)
-        if page:
-            yield page if type(page) == list else [page]
+class Everything(Stream):
+    def sync(self, ctx):
+        self.format_and_write(ctx.client.request(self.tap_stream_id))
 
 
-class Agents(Puller):
-    def yield_pages(self):
-        since_id = self._bookmark.get("since_id") or 0
+class Agents(Stream):
+    def sync(self, ctx):
+        since_id_bookmark = [self.tap_stream_id, "since_id"]
+        since_id = ctx.bookmark(since_id_bookmark) or 0
         while True:
             params = {
                 "since_id": since_id,
                 "limit": 500,
             }
-            page = self.client.request(self.tap_stream_id, params)
+            page = ctx.client.request(self.tap_stream_id, params)
             if not page:
-                self._bookmark.pop("since_id", None)
+                ctx.set_bookmark(since_id_bookmark, None)
                 break
+            self.format_and_write(page)
             since_id = page[-1]["id"] + 1
-            self._bookmark["since_id"] = since_id
-            yield page
+            ctx.set_bookmark(since_id_bookmark, since_id)
+            ctx.write_state()
 
 
-class Chats(Puller):
+class Chats(Stream):
     def _bulk_chats(self, chat_ids):
         if not chat_ids:
             return []
         params = {"ids": ",".join(chat_ids)}
-        body = self.client.request(self.tap_stream_id, params=params)
+        body = ctx.client.request(self.tap_stream_id, params=params)
         return body["docs"].values()
 
     def _search(self, chat_type, ts_field, dt):
         params = {
             "q": "type:{} AND {}:[{} TO *]".format(chat_type, ts_field, dt)
         }
-        return self.client.request(
+        return ctx.client.request(
             self.tap_stream_id, params=params, url_extra="/search")
 
-    def _pull(self, chat_type, ts_field, *, full_sync):
+    def _pull(self, ctx, chat_type, ts_field, *, full_sync):
         """Pulls and yields pages of data for the given chat_type, where
         chat_type can be either "chat" or "offline_msg".
 
@@ -86,21 +84,21 @@ class Chats(Puller):
         based on the "start_date" in the config. When this is true, all
         bookmarks for this chat type will be ignored.
         """
-        ts_bookmark_key = chat_type + "_ts"
-        url_bookmark_key = chat_type + "_next_url"
+        ts_bookmark_key = [self.tap_stream_id, chat_type + "_ts"]
+        url_bookmark_key = [self.tap_stream_id, chat_type + "_next_url"]
         if full_sync:
-            self._bookmark.pop(ts_bookmark_key, None)
-            self._bookmark.pop(url_bookmark_key, None)
+            ctx.set_bookmark(ts_bookmark_key, None)
+            ctx.set_bookmark(url_bookmark_key, None)
         ts = self._update_start_state(ts_bookmark_key)
-        next_url = self._bookmark.get(url_bookmark_key)
+        next_url = ctx.bookmark(url_bookmark_key)
         max_ts = ts
         while True:
             if next_url:
-                search = self.client.request(self.tap_stream_id, url=next_url)
+                search = ctx.client.request(self.tap_stream_id, url=next_url)
             else:
                 search = self._search(chat_type, ts_field, ts)
             next_url = search["next_url"]
-            self._bookmark[url_bookmark_key] = next_url
+            ctx.set_bookmark(url_bookmark_key, next_url)
             chat_ids = [r["id"] for r in search["results"]]
             chats = self._bulk_chats(chat_ids)
             max_ts = max(max_ts, *[c[ts_field] for c in chats])
@@ -109,49 +107,53 @@ class Chats(Puller):
                 break
         self._set_last_updated(ts_bookmark_key, max_ts)
 
-    def yield_pages(self):
-        full_sync_days = timedelta(days=self.config.get("chats_full_sync_days", 7))
-        last_full_sync = self._bookmark.get("chats_last_full_sync")
+    def sync(self, ctx):
+        full_sync_days = timedelta(days=ctx.config.get("chats_full_sync_days", 7))
+        last_sync_bookmark = [self.tap_stream_id, "chats_last_full_sync"]
+        last_full_sync = ctx.bookmark(last_sync_bookmark)
         full_sync = not last_full_sync or \
             pendulum.parse(last_full_sync) + full_sync_days <= datetime.utcnow()
-        for page in chain(self._pull("chat", "end_timestamp", full_sync=full_sync),
-                          self._pull("offline_msg", "timestamp", full_sync=full_sync)):
-            yield page
+        self._pull(ctx, "chat", "end_timestamp", full_sync=full_sync),
+        self._pull(ctx, "offline_msg", "timestamp", full_sync=full_sync)
         if full_sync:
-            self._bookmark["chats_last_full_sync"] = datetime.utcnow().isoformat()
+            ctx.set_bookmark(last_sync_bookmark, datetime.utcnow().isoformat())
 
 
-@attr.s
-class Stream(object):
-    tap_stream_id = attr.ib()
-    pk_fields = attr.ib()
-    puller = attr.ib()
-    formatter = attr.ib(default=None)
-
-    def format_page(self, page):
-        if self.formatter:
-            return self.formatter(page)
-        return page
+class Triggers(Everything):
+    def format_response(self, response):
+        for trigger in response:
+            definition = trigger["definition"]
+            for k in ["condition", "actions"]:
+                definition[k] = json.dumps(definition[k])
+        return response
 
 
-def format_triggers(page):
-    for trigger in page:
-        definition = trigger["definition"]
-        for k in ["condition", "actions"]:
-            definition[k] = json.dumps(definition[k])
-    return page
+class Bans(Everything):
+    def format_response(self, response):
+        return response["visitor"] + response["ip_address"]
 
 
-def format_bans(page):
-    return page[0]["visitor"] + page[0]["ip_address"]
+class Account(Everything):
+    def sync(self, ctx):
+        try:
+            super().sync(ctx)
+        except HTTPError as e:
+            if e.response.status_code != 403:
+                raise
 
-STREAMS = [
-    Stream("account", ["account_key"], Everything()),
-    Stream("agents", ["id"], Agents()),
-    Stream("chats", ["id"], Chats()),
-    Stream("shortcuts", ["name"], Everything()),
-    Stream("triggers", ["id"], Everything(), format_triggers),
-    Stream("bans", ["id"], Everything(), format_bans),
-    Stream("departments", ["id"], Everything()),
-    Stream("goals", ["id"], Everything()),
+all_streams = [
+    Agents("agents", ["id"]),
+    Chats("chats", ["id"]),
+    Everything("shortcuts", ["name"]),
+    Triggers("triggers", ["id"]),
+    Bans("bans", ["id"]),
+    Everything("departments", ["id"]),
+    Everything("goals", ["id"]),
+    # The account endpoint is restricted to zopim accounts, meaning
+    # integrated Zendesk accounts will get a 403 for this endpoint. As a
+    # result, this stream should not be the first stream to run. If we get
+    # to this stream we know the token is valid and the stream can just
+    # ignore a 403.
+    Account("account", ["account_key"]),
 ]
+all_stream_ids = [s.tap_stream_id for s in all_streams]

@@ -9,7 +9,7 @@ class RateLimitException(Exception):
     pass
 
 
-class ZendeskChatClient(object):
+class Client(object):
     def __init__(self, config):
         # self.session = requests.Session()
         self.access_token = config["access_token"]
