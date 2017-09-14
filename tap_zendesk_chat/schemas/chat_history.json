@@ -1,0 +1,76 @@
+{
+  "properties": {
+    "name": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "channel": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "conversion": {
+      "$ref": "chat_conversion"
+    },
+    "timestamp": {
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "date-time"
+    },
+    "msg": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "nick": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "type": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "options": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "department_id": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "department_name": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "msg_id": {
+      "type": [
+        "null",
+        "string"
+      ]
+    }
+  },
+  "type": [
+    "null",
+    "object"
+  ],
+  "tap_schema_dependencies": [
+    "chat_conversion"
+  ],
+  "additionalProperties": false
+}

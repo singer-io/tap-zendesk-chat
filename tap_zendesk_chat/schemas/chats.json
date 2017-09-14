@@ -1,0 +1,203 @@
+{
+  "properties": {
+    "department_id": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "comment": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "missed": {
+      "type": [
+        "null",
+        "boolean"
+      ]
+    },
+    "rating": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "conversions": {
+      "items": {
+        "$ref": "chat_conversion"
+      },
+      "type": [
+        "null",
+        "array"
+      ]
+    },
+    "type": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "webpath": {
+      "items": {
+        "$ref": "chat_webpath"
+      },
+      "type": [
+        "null",
+        "array"
+      ]
+    },
+    "triggered": {
+      "type": [
+        "null",
+        "boolean"
+      ]
+    },
+    "message": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "referrer_search_terms": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "referrer_search_engine": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "zendesk_ticket_id": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "unread": {
+      "type": [
+        "null",
+        "boolean",
+        "integer"
+      ]
+    },
+    "timestamp": {
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "date-time"
+    },
+    "end_timestamp": {
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "date-time"
+    },
+    "response_time": {
+      "$ref": "chat_response_time"
+    },
+    "session": {
+        "type": [
+          "null",
+          "object"
+        ],
+        "additionalProperties": true
+    },
+    "history": {
+      "items": {
+        "$ref": "chat_history"
+      },
+      "type": [
+        "null",
+        "array"
+      ]
+    },
+    "agent_names": {
+      "items": {
+        "type": [
+          "string"
+        ]
+      },
+      "type": [
+        "null",
+        "array"
+      ]
+    },
+    "tags": {
+      "items": {
+        "type": [
+          "string"
+        ]
+      },
+      "type": [
+        "null",
+        "array"
+      ]
+    },
+    "visitor": {
+      "$ref": "chat_visitor"
+    },
+    "started_by": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "triggered_response": {
+      "type": [
+        "null"
+      ]
+    },
+    "id": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "count": {
+      "$ref": "chat_count"
+    },
+    "agent_ids": {
+      "items": {
+        "type": [
+          "string"
+        ]
+      },
+      "type": [
+        "null",
+        "array"
+      ]
+    },
+    "department_name": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "duration": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    }
+  },
+  "additionalProperties": false,
+  "type": [
+    "null",
+    "object"
+  ],
+  "tap_schema_dependencies": [
+    "chat_conversion",
+    "chat_count",
+    "chat_history",
+    "chat_response_time",
+    "chat_visitor",
+    "chat_webpath"
+  ]
+}

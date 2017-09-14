@@ -1,0 +1,51 @@
+{
+  "properties": {
+    "description": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "name": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "id": {
+      "type": [
+        "integer"
+      ]
+    },
+    "enabled": {
+      "type": [
+        "null",
+        "boolean"
+      ]
+    },
+    "members": {
+      "items": {
+        "type": [
+          "null",
+          "integer"
+        ]
+      },
+      "type": [
+        "null",
+        "array"
+      ]
+    },
+    "settings": {
+      "type": [
+        "null",
+        "object"
+      ],
+      "additionalProperties": true
+    }
+  },
+  "type": [
+    "null",
+    "object"
+  ],
+  "additionalProperties": false
+}

@@ -1,0 +1,44 @@
+{
+  "type": [
+    "null",
+    "object"
+  ],
+  "properties": {
+    "reason": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "visitor_id": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "visitor_name": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "id": {
+      "type": [
+        "integer"
+      ]
+    },
+    "type": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "ip_address": {
+      "type": [
+        "null",
+        "string"
+      ]
+    }
+  },
+  "additionalProperties": false
+}

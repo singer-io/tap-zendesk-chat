@@ -1,0 +1,70 @@
+{
+  "properties": {
+    "id": {
+      "type": [
+        "string"
+      ]
+    },
+    "goal_name": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "goal_id": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "attribution": {
+      "properties": {
+        "chat_timestamp": {
+          "type": [
+            "null",
+            "string"
+          ],
+          "format": "date-time"
+        },
+        "department_name": {
+          "type": [
+            "null"
+          ]
+        },
+        "agent_name": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "department_id": {
+          "type": [
+            "null"
+          ]
+        },
+        "agent_id": {
+          "type": [
+            "null",
+            "integer"
+          ]
+        }
+      },
+      "type": [
+        "null",
+        "object"
+      ]
+    },
+    "timestamp": {
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "date-time"
+    }
+  },
+  "type": [
+    "null",
+    "object"
+  ],
+  "additionalProperties": false
+}
