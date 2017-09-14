@@ -19,7 +19,8 @@
       "type": [
         "null",
         "string"
-      ]
+      ],
+      "format": "date-time"
     },
     "msg": {
       "type": [
