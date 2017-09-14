@@ -47,7 +47,7 @@ class Agents(Stream):
         while True:
             params = {
                 "since_id": since_id,
-                "limit": 500,
+                "limit": ctx.config.get("agents_page_limit", 500),
             }
             page = ctx.client.request(self.tap_stream_id, params)
             if not page:
