@@ -1,5 +1,5 @@
 from singer import metrics
-import pendulum
+from pendulum import parse as dt_parse
 import time
 from datetime import datetime, timedelta
 from requests.exceptions import HTTPError
@@ -112,11 +112,23 @@ class Chats(Stream):
         ctx.set_bookmark(ts_bookmark_key, max_bookmark)
         ctx.write_state()
 
+    def _should_run_full_sync(self, ctx):
+        sync_days = ctx.config.get("chats_full_sync_days")
+        if sync_days:
+            last_sync = ctx.state.get("chats_last_full_sync")
+            if not last_sync:
+                LOGGER.info("Running full sync of chats: no last sync time")
+                return True
+            next_sync = dt_parse(last_sync) + timedelta(days=sync_days)
+            if next_sync <= datetime.utcnow():
+                LOGGER.info("Running full sync of chats: "
+                            "last sync was {}, configured to run every {} days"
+                            .format(last_sync, sync_days))
+                return True
+        return False
+
     def sync(self, ctx):
-        full_sync_days = timedelta(days=ctx.config.get("chats_full_sync_days", 7))
-        last_full_sync = ctx.state.get("chats_last_full_sync")
-        full_sync = not last_full_sync or \
-            pendulum.parse(last_full_sync) + full_sync_days <= datetime.utcnow()
+        full_sync = self._should_run_full_sync(ctx)
         self._pull(ctx, "chat", "end_timestamp", full_sync=full_sync),
         self._pull(ctx, "offline_msg", "timestamp", full_sync=full_sync)
         if full_sync:
