@@ -51,13 +51,13 @@ def sync(ctx):
     currently_syncing = ctx.state.get("currently_syncing")
     start_idx = all_stream_ids.index(currently_syncing) \
         if currently_syncing else 0
+    stream_ids_to_sync = [cs.tap_stream_id for cs in ctx.catalog.streams
+                          if cs.is_selected()]
     streams = [s for s in all_streams[start_idx:]
-               if s.tap_stream_id in
-               [s.tap_stream_id for s in ctx.catalog.streams]]
-    for stream in streams:
-        output_schema(stream)
+               if s.tap_stream_id in stream_ids_to_sync]
     for stream in streams:
         ctx.state["currently_syncing"] = stream.tap_stream_id
+        output_schema(stream)
         ctx.write_state()
         stream.sync(ctx)
     ctx.state["currently_syncing"] = None
