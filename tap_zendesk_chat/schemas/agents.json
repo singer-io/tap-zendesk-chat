@@ -70,6 +70,12 @@
         "array"
       ]
     },
+    "skills": {
+      "type": [
+        "null",
+        "array"
+      ]
+    },
     "email": {
       "type": [
         "null",
