@@ -3,7 +3,6 @@ from pendulum import parse as dt_parse
 import time
 from datetime import datetime, timedelta
 from requests.exceptions import HTTPError
-import attr
 import json
 import singer
 
