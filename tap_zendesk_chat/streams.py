@@ -2,7 +2,6 @@ from singer import metrics
 from pendulum import parse as dt_parse
 import time
 from datetime import datetime, timedelta
-from requests.exceptions import HTTPError
 import json
 import singer
 
@@ -154,29 +153,20 @@ class Bans(Stream):
 
 class Account(Stream):
     def sync(self, ctx):
-        # The account endpoint is restricted to zopim accounts, meaning
-        # integrated Zendesk accounts will get a 403 for this endpoint. As a
-        # result, we will have to just ignore a 403 and not output any data.
-        try:
-            self.write_page([ctx.client.request(self.tap_stream_id)])
-        except HTTPError as e:
-            if e.response.status_code == 403:
-                LOGGER.info("Ignoring 403 from accounts endpoint - I assume "
-                            "this must be an integrated Zendesk account")
-            else:
-                raise
+        # The account endpoint returns a single item, so we have to wrap it in
+        # a list to write a "page"
+        self.write_page([ctx.client.request(self.tap_stream_id)])
 
+DEPARTMENTS = Everything("departments", ["id"])
+ACCOUNT = Account("account", ["account_key"])
 all_streams = [
     Agents("agents", ["id"]),
     Chats("chats", ["id"]),
     Everything("shortcuts", ["name"]),
     Triggers("triggers", ["id"]),
     Bans("bans", ["id"]),
-    Everything("departments", ["id"]),
+    DEPARTMENTS,
     Everything("goals", ["id"]),
-    # Account stream is last due to the 403 issue described in Account above -
-    # if we ever reach the Account stream it means the token is valid but we're
-    # just not able to access the endpoint.
-    Account("account", ["account_key"]),
+    ACCOUNT,
 ]
 all_stream_ids = [s.tap_stream_id for s in all_streams]
