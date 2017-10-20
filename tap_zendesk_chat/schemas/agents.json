@@ -35,6 +35,12 @@
         }
       }
     },
+    "role_id": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
     "display_name": {
       "type": [
         "null",
