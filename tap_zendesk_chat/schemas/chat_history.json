@@ -63,6 +63,30 @@
         "null",
         "string"
       ]
+    },
+    "tags": {
+      "type": [
+        "null",
+        "array"
+      ]
+    },
+    "new_tags": {
+      "type": [
+        "null",
+        "array"
+      ]
+    },
+    "rating": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "new_rating": {
+      "type": [
+        "null",
+        "string"
+      ]
     }
   },
   "type": [
