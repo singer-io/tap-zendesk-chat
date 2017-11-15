@@ -28,7 +28,8 @@
         },
         "department_name": {
           "type": [
-            "null"
+            "null",
+            "string"
           ]
         },
         "agent_name": {
@@ -39,7 +40,8 @@
         },
         "department_id": {
           "type": [
-            "null"
+            "null",
+            "integer"
           ]
         },
         "agent_id": {
@@ -66,5 +68,5 @@
     "null",
     "object"
   ],
-  "additionalProperties": false
+  "additionalProperties": true
 }
