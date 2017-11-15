@@ -151,7 +151,8 @@
     },
     "triggered_response": {
       "type": [
-        "null"
+        "null",
+        "boolean"
       ]
     },
     "id": {
