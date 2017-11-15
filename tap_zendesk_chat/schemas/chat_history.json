@@ -99,7 +99,7 @@
     "skills_name": {
       "type": [
         "null",
-        "string"
+        "array"
       ]
     }
   },
