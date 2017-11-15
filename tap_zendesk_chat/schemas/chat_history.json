@@ -69,7 +69,8 @@
     "msg_id": {
       "type": [
         "null",
-        "string"
+        "string",
+        "integer"
       ]
     },
     "tags": {
