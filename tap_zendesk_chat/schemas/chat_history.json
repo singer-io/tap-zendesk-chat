@@ -49,7 +49,15 @@
     "department_id": {
       "type": [
         "null",
-        "integer"
+        "integer",
+        "string"
+      ]
+    },
+    "prev_department_id": {
+      "type": [
+        "null",
+        "integer",
+        "string"
       ]
     },
     "department_name": {
@@ -87,6 +95,12 @@
         "null",
         "string"
       ]
+    },
+    "skills_name": {
+      "type": [
+        "null",
+        "string"
+      ]
     }
   },
   "type": [
@@ -96,5 +110,5 @@
   "tap_schema_dependencies": [
     "chat_conversion"
   ],
-  "additionalProperties": false
+  "additionalProperties": true
 }
