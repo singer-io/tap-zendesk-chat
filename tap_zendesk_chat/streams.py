@@ -8,6 +8,15 @@ import singer
 LOGGER = singer.get_logger()
 
 
+def break_into_intervals(days, start_time: str, now: datetime):
+    interval = timedelta(days=days)
+    start_dt = dt_parse(start_time)
+    while start_dt < now:
+        end_dt = min(start_dt + interval, now)
+        yield start_dt, end_dt
+        start_dt = end_dt
+
+
 class Stream(object):
     """Information about and functions for syncing streams.
 
@@ -66,9 +75,11 @@ class Chats(Stream):
         body = ctx.client.request(self.tap_stream_id, params=params)
         return list(body["docs"].values())
 
-    def _search(self, ctx, chat_type, ts_field, dt):
+    def _search(self, ctx, chat_type, ts_field,
+                start_dt: datetime, end_dt: datetime):
         params = {
-            "q": "type:{} AND {}:[{} TO *]".format(chat_type, ts_field, dt)
+            "q": "type:{} AND {}:[{} TO {}]"
+            .format(chat_type, ts_field, start_dt.isoformat(), end_dt.isoformat())
         }
         return ctx.client.request(
             self.tap_stream_id, params=params, url_extra="/search")
@@ -92,23 +103,26 @@ class Chats(Stream):
         start_time = ctx.update_start_date_bookmark(ts_bookmark_key)
         next_url = ctx.bookmark(url_offset_key)
         max_bookmark = start_time
-        while True:
-            if next_url:
-                search = ctx.client.request(self.tap_stream_id, url=next_url)
-            else:
-                search = self._search(ctx, chat_type, ts_field, start_time)
-            next_url = search["next_url"]
-            ctx.set_bookmark(url_offset_key, next_url)
+        interval_days = ctx.config.get("chats_interval_days", 90)
+        intervals = break_into_intervals(interval_days, start_time, ctx.now)
+        for start_dt, end_dt in intervals:
+            while True:
+                if next_url:
+                    search_resp = ctx.client.request(self.tap_stream_id, url=next_url)
+                else:
+                    search_resp = self._search(ctx, chat_type, ts_field, start_dt, end_dt)
+                next_url = search_resp["next_url"]
+                ctx.set_bookmark(url_offset_key, next_url)
+                ctx.write_state()
+                chat_ids = [r["id"] for r in search_resp["results"]]
+                chats = self._bulk_chats(ctx, chat_ids)
+                if chats:
+                    self.write_page(chats)
+                    max_bookmark = max(max_bookmark, *[c[ts_field] for c in chats])
+                if not next_url:
+                    break
+            ctx.set_bookmark(ts_bookmark_key, max_bookmark)
             ctx.write_state()
-            chat_ids = [r["id"] for r in search["results"]]
-            chats = self._bulk_chats(ctx, chat_ids)
-            if chats:
-                self.write_page(chats)
-                max_bookmark = max(max_bookmark, *[c[ts_field] for c in chats])
-            if not next_url:
-                break
-        ctx.set_bookmark(ts_bookmark_key, max_bookmark)
-        ctx.write_state()
 
     def _should_run_full_sync(self, ctx):
         sync_days = ctx.config.get("chats_full_sync_days")
@@ -118,7 +132,7 @@ class Chats(Stream):
                 LOGGER.info("Running full sync of chats: no last sync time")
                 return True
             next_sync = dt_parse(last_sync) + timedelta(days=sync_days)
-            if next_sync <= datetime.utcnow():
+            if next_sync <= ctx.now:
                 LOGGER.info("Running full sync of chats: "
                             "last sync was {}, configured to run every {} days"
                             .format(last_sync, sync_days))
@@ -130,7 +144,7 @@ class Chats(Stream):
         self._pull(ctx, "chat", "end_timestamp", full_sync=full_sync),
         self._pull(ctx, "offline_msg", "timestamp", full_sync=full_sync)
         if full_sync:
-            ctx.state["chats_last_full_sync"] = datetime.utcnow().isoformat()
+            ctx.state["chats_last_full_sync"] = ctx.now.isoformat()
             ctx.write_state()
 
 
