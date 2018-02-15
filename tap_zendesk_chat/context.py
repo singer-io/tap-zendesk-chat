@@ -1,3 +1,4 @@
+from datetime import datetime
 from .http import Client
 import singer
 from datetime import datetime
@@ -9,6 +10,7 @@ class Context(object):
         self.state = state
         self.catalog = catalog
         self.client = Client(config)
+        self.now = datetime.utcnow()
 
     @property
     def bookmarks(self):
