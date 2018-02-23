@@ -103,7 +103,7 @@ class Chats(Stream):
         start_time = ctx.update_start_date_bookmark(ts_bookmark_key)
         next_url = ctx.bookmark(url_offset_key)
         max_bookmark = start_time
-        interval_days = ctx.config.get("chat_search_interval_days", 60)
+        interval_days = ctx.config.get("chat_search_interval_days", 14)
         intervals = break_into_intervals(interval_days, start_time, ctx.now)
         for start_dt, end_dt in intervals:
             while True:
