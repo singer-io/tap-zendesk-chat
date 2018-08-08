@@ -27,6 +27,12 @@
         "null",
         "string"
       ]
+    },
+    "scope": {
+      "type": [
+        "null",
+        "string"
+      ]
     }
   },
   "type": [
