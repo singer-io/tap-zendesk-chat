@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.1.14
+  * Add `id` and `departments` fields to the `shortcuts` schema [#13](https://github.com/singer-io/tap-zendesk-chat/pull/13)
+
 ## 0.1.13
   * Adds the "scope" element to the shortcuts schema [#12](https://github.com/singer-io/tap-zendesk-chat/pull/12)
 
