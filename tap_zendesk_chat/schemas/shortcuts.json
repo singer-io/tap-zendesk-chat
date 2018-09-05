@@ -33,6 +33,21 @@
         "null",
         "string"
       ]
+    },
+    "id": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "departments": {
+      "type": [
+        "null",
+        "array"
+      ],
+      "items": {
+        "type": "integer"
+      }
     }
   },
   "type": [
