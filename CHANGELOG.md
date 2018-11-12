@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.1.15
+  * Update version of `requests` to `0.20.0` in response to CVE 2018-18074
+
 ## 0.1.14
   * Add `id` and `departments` fields to the `shortcuts` schema [#13](https://github.com/singer-io/tap-zendesk-chat/pull/13)
 
