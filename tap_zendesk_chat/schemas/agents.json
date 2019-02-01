@@ -102,7 +102,7 @@
         "string"
       ],
       "format": "date-time"
-    }
+    },
     "scope": {
       "type": [
         "null",
