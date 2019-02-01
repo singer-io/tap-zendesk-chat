@@ -103,6 +103,12 @@
       ],
       "format": "date-time"
     }
+    "scope": {
+      "type": [
+        "null",
+        "string"
+  ]
+}
   },
   "additionalProperties": false
 }
