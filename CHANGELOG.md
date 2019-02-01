@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.1.16
+  * Adds the "scope" element to the agents schema [#16](https://github.com/singer-io/tap-zendesk-chat/pull/16)
+
 ## 0.1.15
   * Update version of `requests` to `2.20.0` in response to CVE 2018-18074
 
