@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.1.17
+  * Fixes a 400 Bad Request issue when fetching Agents [#19](https://github.com/singer-io/tap-zendesk-chat/pull/19)
+
 ## 0.1.16
   * Adds the "scope" element to the agents schema [#16](https://github.com/singer-io/tap-zendesk-chat/pull/16)
 
