@@ -73,12 +73,11 @@ def discover(config):
     return catalog
 
 def build_metadata(raw_schema):
-#    for k,v in schema['properties']:
     mdata = metadata.new()
     for prop in raw_schema['properties'].keys():
         metadata.write(mdata, ('properties', prop), 'inclusion', 'automatic')
     return mdata
-    
+
 
 def output_schema(stream):
     schema = load_schema(stream.tap_stream_id)
@@ -88,7 +87,7 @@ def output_schema(stream):
 def is_selected(stream):
     mdata = metadata.to_map(stream.metadata)
     return metadata.get(mdata, (), 'selected')
-    
+
 def sync(ctx):
     currently_syncing = ctx.state.get("currently_syncing")
     start_idx = streams_.all_stream_ids.index(currently_syncing) \
