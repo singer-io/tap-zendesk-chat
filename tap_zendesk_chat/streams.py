@@ -137,7 +137,7 @@ class Chats(Stream):
             if not last_sync:
                 LOGGER.info("Running full sync of chats: no last sync time")
                 return True
-            next_sync = dt_parse(last_sync) + timedelta(days=sync_days)
+            next_sync = dt_parse(last_sync) + timedelta(days=int(sync_days))
             if next_sync <= ctx.now:
                 LOGGER.info("Running full sync of chats: "
                             "last sync was {}, configured to run every {} days"
