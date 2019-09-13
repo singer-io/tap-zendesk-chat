@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import os
 import singer
-from singer import metrics, utils
+from singer import metrics, utils, metadata
 from singer.catalog import Catalog, CatalogEntry, Schema
 from requests.exceptions import HTTPError
 from . import streams as streams_
@@ -60,15 +60,23 @@ def discover(config):
         if (not include_account_stream
             and stream.tap_stream_id == streams_.ACCOUNT.tap_stream_id):
             continue
-        schema = Schema.from_dict(load_schema(stream.tap_stream_id),
-                                  inclusion="automatic")
+        raw_schema = load_schema(stream.tap_stream_id)
+        mdata = build_metadata(raw_schema)
+        schema = Schema.from_dict(raw_schema)
         catalog.streams.append(CatalogEntry(
             stream=stream.tap_stream_id,
             tap_stream_id=stream.tap_stream_id,
             key_properties=stream.pk_fields,
             schema=schema,
+            metadata=metadata.to_list(mdata)
         ))
     return catalog
+
+def build_metadata(raw_schema):
+    mdata = metadata.new()
+    for prop in raw_schema['properties'].keys():
+        metadata.write(mdata, ('properties', prop), 'inclusion', 'automatic')
+    return mdata
 
 
 def output_schema(stream):
@@ -76,12 +84,16 @@ def output_schema(stream):
     singer.write_schema(stream.tap_stream_id, schema, stream.pk_fields)
 
 
+def is_selected(stream):
+    mdata = metadata.to_map(stream.metadata)
+    return metadata.get(mdata, (), 'selected')
+
 def sync(ctx):
     currently_syncing = ctx.state.get("currently_syncing")
     start_idx = streams_.all_stream_ids.index(currently_syncing) \
         if currently_syncing else 0
     stream_ids_to_sync = [cs.tap_stream_id for cs in ctx.catalog.streams
-                          if cs.is_selected()]
+                          if is_selected(cs)]
     streams = [s for s in streams_.all_streams[start_idx:]
                if s.tap_stream_id in stream_ids_to_sync]
     for stream in streams:
