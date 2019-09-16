@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.2.0
+  * Migrated annotated-schema to use metadata instead [#20](https://github.com/singer-io/tap-zendesk-chat/pull/20)
+
 ## 0.1.17
   * Fixes a 400 Bad Request issue when fetching Agents [#19](https://github.com/singer-io/tap-zendesk-chat/pull/19)
 
