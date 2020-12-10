@@ -9,7 +9,9 @@ LOGGER = singer.get_logger()
 
 def break_into_intervals(days, start_time: str, now: datetime):
     delta = timedelta(days=days)
-    start_dt = utils.strptime_to_utc(start_time)
+    # conver to datetime + add 1 millisecond so that we only get new records
+    start_dt = utils.strptime_to_utc(start_time) \
+               + timedelta(milliseconds=1)
     while start_dt < now:
         end_dt = min(start_dt + delta, now)
         yield start_dt, end_dt
