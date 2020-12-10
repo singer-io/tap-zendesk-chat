@@ -27,6 +27,8 @@ class Stream:
     :var pk_fields: A list of primary key fields"""
     tap_stream_id = None
     pk_fields = None
+    replication_method = None
+    replication_keys = None
 
     def metrics(self, page):
         with metrics.record_counter(self.tap_stream_id) as counter:
@@ -81,6 +83,7 @@ class Agents(Stream):
 class Chats(Stream):
     tap_stream_id = 'chats'
     pk_fields = ["id"]
+    replication_method = 'INCREMENTAL'
 
     def _bulk_chats(self, ctx, chat_ids):
         if not chat_ids:
@@ -171,11 +174,13 @@ class Chats(Stream):
 class Shortcuts(Everything):
     tap_stream_id = 'shortcuts'
     pk_fields = ["name"]
+    replication_method = 'FULL_TABLE'
 
 
 class Triggers(Stream):
     tap_stream_id = 'triggers'
     pk_fields = ["id"]
+    replication_method = 'FULL_TABLE'
 
     def sync(self, ctx):
         page = ctx.client.request(self.tap_stream_id)
@@ -189,6 +194,7 @@ class Triggers(Stream):
 class Bans(Stream):
     tap_stream_id = 'bans'
     pk_fields = ['id']
+    replication_method = 'FULL_TABLE'
 
     def sync(self, ctx):
         response = ctx.client.request(self.tap_stream_id)
@@ -199,16 +205,19 @@ class Bans(Stream):
 class Departments(Everything):
     tap_stream_id = 'departments'
     pk_fields = ["id"]
+    replication_method = 'FULL_TABLE'
 
 
 class Goals(Everything):
     tap_stream_id = 'goals'
     pk_fields = ["id"]
+    replication_method = 'FULL_TABLE'
 
 
 class Account(Stream):
     tap_stream_id = 'account'
     pk_fields = ['account_key']
+    replication_method = 'FULL_TABLE'
 
     def sync(self, ctx):
         # The account endpoint returns a single item, so we have to wrap it in
