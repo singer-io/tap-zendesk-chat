@@ -104,7 +104,7 @@ class Chats(Stream):
         next_url = ctx.bookmark(url_offset_key)
         max_bookmark = start_time
 
-        interval_days = 14
+        interval_days = 7
         interval_days_str = ctx.config.get("chat_search_interval_days")
         if interval_days_str is not None:
             interval_days = int(interval_days_str)
