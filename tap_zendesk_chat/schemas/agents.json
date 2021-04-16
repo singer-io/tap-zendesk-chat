@@ -65,6 +65,12 @@
         "boolean"
       ]
     },
+    "enabled_departments": {
+      "type": [
+        "null",
+        "array"
+      ]
+    },
     "departments": {
       "items": {
         "type": [
