@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.2.1
+  * Added `enabled_departments` to the JSON Schema for agents [#27](https://github.com/singer-io/tap-zendesk-chat/pull/27)
+
 ## 0.2.0
   * Migrated annotated-schema to use metadata instead [#20](https://github.com/singer-io/tap-zendesk-chat/pull/20)
 
