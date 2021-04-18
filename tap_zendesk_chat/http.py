@@ -9,7 +9,7 @@ class RateLimitException(Exception):
     pass
 
 
-class Client(object):
+class Client:
     def __init__(self, config):
         # self.session = requests.Session()
         self.access_token = config["access_token"]

@@ -9,9 +9,7 @@ setup(name="tap-zendesk-chat",
       classifiers=["Programming Language :: Python :: 3 :: Only"],
       py_modules=["tap_zendesk_chat"],
       install_requires=[
-          "python-dateutil==2.6.0",  # because of singer-python issue
-          "pendulum==1.2.0",  # because of singer-python issue
-          "singer-python==5.0.3",
+          "singer-python==5.9.1",
           "requests==2.20.0",
       ],
       entry_points="""

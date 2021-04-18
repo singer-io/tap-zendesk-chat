@@ -19,6 +19,29 @@ This tap:
 - Outputs the schema for each resource
 - Incrementally pulls data based on the input state
 
+## Configuration
+
+Create a `config.json` file that looks like this:
+
+```json
+{
+    "start_date": "2010-01-01",
+    "access_token": "your-access-token",
+    "user_agent": "tap-zendesk-chat <email@my_domain.com>"
+}
+```
+
+Overview over the possible config properties:
+
+| Config property             | Required / Default value | Description
+| --------------------------- | ------------------------ | -----------
+| `start_date`                | Yes                      | For streams with replication method INCREMENTAL the start date time to be used
+| `access_token`              | Yes                      | Your Zen Desk Chat access token
+| `user_agent`                | No                       | User agent to be used for HTTP requests
+| `agents_page_limit`         | No, default `"100"`      | page limit for stream `agents`
+| `chat_search_interval_days` | No, default: `"14"`      | the interval in days for stream `chats`
+| `chats_full_sync_days`      | No                       | See section "Chats Full Re-syncs" below
+
 ## Quick Start
 
 1. Install
@@ -43,16 +66,8 @@ Zopim account.
 
 3. Create the Config File
 
-Create a JSON file called `config.json` containing the access token and a
-`start_date`, which specifies the date at which the tap will begin pulling data
-(for those resources that support this).
-
-```json
-{
-    "start_date": "2010-01-01",
-    "access_token": "your-access-token"
-}
-```
+Create a JSON file called `config.json` from the `sample_config.json` file in this
+repository.
 
 4. Run the Tap in Discovery Mode
 
@@ -94,4 +109,5 @@ tap's "state."
 
 ---
 
-Copyright &copy; 2017 Stitch
+Copyright &copy; 2017 Stitch<br/>
+Copyright &copy; 2020 Horze International GmbH

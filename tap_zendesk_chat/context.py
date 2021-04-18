@@ -1,16 +1,16 @@
-from datetime import datetime
-from .http import Client
+from datetime import datetime, timezone
 import singer
-from datetime import datetime
+
+from .http import Client
 
 
-class Context(object):
+class Context:
     def __init__(self, config, state, catalog):
         self.config = config
         self.state = state
         self.catalog = catalog
         self.client = Client(config)
-        self.now = datetime.utcnow()
+        self.now = datetime.utcnow().replace(tzinfo=timezone.utc)
 
     @property
     def bookmarks(self):

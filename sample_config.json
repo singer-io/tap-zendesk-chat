@@ -1,0 +1,5 @@
+{
+    "start_date": "2010-01-01",
+    "access_token": "your-access-token",
+    "user_agent": "tap-zendesk-chat <email@my_domain.com>"
+}

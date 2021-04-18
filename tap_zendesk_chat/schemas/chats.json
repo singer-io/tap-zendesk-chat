@@ -4,25 +4,29 @@
       "type": [
         "null",
         "integer"
-      ]
+      ],
+      "description": "The ID of the department to which the chat is directed"
     },
     "comment": {
       "type": [
         "null",
         "string"
-      ]
+      ],
+      "description": "The customer comment on the chat"
     },
     "missed": {
       "type": [
         "null",
         "boolean"
-      ]
+      ],
+      "description": "Whether the chat was missed or not"
     },
     "rating": {
       "type": [
         "null",
         "string"
-      ]
+      ],
+      "description": "The customer satisfaction rating for the chat"
     },
     "conversions": {
       "items": {
@@ -31,13 +35,16 @@
       "type": [
         "null",
         "array"
-      ]
+      ],
+      "description": "Last 20 conversions (if any) attributed to the chat"
     },
     "type": {
       "type": [
         "null",
         "string"
-      ]
+      ],
+      "enum": ["offline_msg", "chat"],
+      "description": "Chat type. One of offline_msg, chat"
     },
     "webpath": {
       "items": {
@@ -46,19 +53,22 @@
       "type": [
         "null",
         "array"
-      ]
+      ],
+      "description": "The list of pages the customer navigated to during the chat"
     },
     "triggered": {
       "type": [
         "null",
         "boolean"
-      ]
+      ],
+      "description": "Whether the chat was a triggered chat or not"
     },
     "message": {
       "type": [
         "null",
         "string"
-      ]
+      ],
+      "description": "Message of the chat"
     },
     "referrer_search_terms": {
       "type": [
@@ -76,21 +86,23 @@
       "type": [
         "null",
         "integer"
-      ]
+      ],
+      "description": "The ID of the Zendesk Support ticket created from this chat. Available only if using version 2 of the Zendesk Chat-Support integration"
     },
     "unread": {
       "type": [
         "null",
-        "boolean",
-        "integer"
-      ]
+        "boolean"
+      ],
+      "description": "Whether the chat is unread"
     },
     "timestamp": {
       "type": [
         "null",
         "string"
       ],
-      "format": "date-time"
+      "format": "date-time",
+      "description": "Timestamp for the chat"
     },
     "end_timestamp": {
       "type": [
@@ -100,13 +112,15 @@
       "format": "date-time"
     },
     "response_time": {
-      "$ref": "chat_response_time"
+      "$ref": "chat_response_time",
+      "description": "Statistics about the response times in the chat, avg, max and first"
     },
     "session": {
         "type": [
           "null",
           "object"
         ],
+        "description": "Information related to the session of the session of the chat",
         "additionalProperties": true
     },
     "history": {
@@ -116,7 +130,8 @@
       "type": [
         "null",
         "array"
-      ]
+      ],
+      "description": "Chronological list of messages in the chat"
     },
     "agent_names": {
       "items": {
@@ -127,7 +142,8 @@
       "type": [
         "null",
         "array"
-      ]
+      ],
+      "description": "Names of agents involved in the chat"
     },
     "tags": {
       "items": {
@@ -138,31 +154,38 @@
       "type": [
         "null",
         "array"
-      ]
+      ],
+      "description": "Tags associated with the chat"
     },
     "visitor": {
-      "$ref": "chat_visitor"
+      "$ref": "chat_visitor",
+      "description": "Information about the visitor"
     },
     "started_by": {
       "type": [
         "null",
         "string"
-      ]
+      ],
+      "enum": ["visitor", "agent", "trigger"],
+      "description": "Who started the chat. Can be one of visitor, agent or trigger"
     },
     "triggered_response": {
       "type": [
         "null",
         "boolean"
-      ]
+      ],
+      "description": "Whether the response was a triggered response or not"
     },
     "id": {
       "type": [
         "null",
         "string"
-      ]
+      ],
+      "description": "The ID of the chat"
     },
     "count": {
-      "$ref": "chat_count"
+      "$ref": "chat_count",
+      "description": "Number of messages (each) by the visitor and the agent(s)"
     },
     "agent_ids": {
       "items": {
@@ -173,19 +196,22 @@
       "type": [
         "null",
         "array"
-      ]
+      ],
+      "description": "IDs of agents involved in the chat"
     },
     "department_name": {
       "type": [
         "null",
         "string"
-      ]
+      ],
+      "description": "The name of the department to which the chat is directed"
     },
     "duration": {
       "type": [
         "null",
         "integer"
-      ]
+      ],
+      "description": "Duration of the chat"
     }
   },
   "additionalProperties": false,

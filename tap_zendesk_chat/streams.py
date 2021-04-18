@@ -1,53 +1,66 @@
-from singer import metrics
-from pendulum import parse as dt_parse
-import time
 from datetime import datetime, timedelta
+import inspect
 import json
 import singer
+from singer import metrics, Transformer, metadata, utils
 
 LOGGER = singer.get_logger()
 
 
 def break_into_intervals(days, start_time: str, now: datetime):
     delta = timedelta(days=days)
-    start_dt = dt_parse(start_time)
+    # conver to datetime + add 1 millisecond so that we only get new records
+    start_dt = utils.strptime_to_utc(start_time) \
+               + timedelta(milliseconds=1)
     while start_dt < now:
         end_dt = min(start_dt + delta, now)
         yield start_dt, end_dt
         start_dt = end_dt
 
 
-class Stream(object):
+class Stream:
     """Information about and functions for syncing streams.
 
     Important class properties:
 
     :var tap_stream_id:
     :var pk_fields: A list of primary key fields"""
-    def __init__(self, tap_stream_id, pk_fields):
-        self.tap_stream_id = tap_stream_id
-        self.pk_fields = pk_fields
+    tap_stream_id = None
+    pk_fields = None
+    replication_method = None
+    replication_keys = None
 
     def metrics(self, page):
         with metrics.record_counter(self.tap_stream_id) as counter:
             counter.increment(len(page))
 
     def format_response(self, response):
-        return [response] if type(response) != list else response
+        return [response] if not isinstance(response, list) else response
 
-    def write_page(self, page):
+    def write_page(self, ctx, page):
         """Formats a list of records in place and outputs the data to
         stdout."""
-        singer.write_records(self.tap_stream_id, page)
+        stream = ctx.catalog.get_stream(self.tap_stream_id)
+        with Transformer() as transformer:
+            for rec in page:
+                singer.write_record(
+                    self.tap_stream_id,
+                    transformer.transform(
+                        rec, stream.schema.to_dict(), metadata.to_map(stream.metadata),
+                    )
+                )
         self.metrics(page)
 
 
 class Everything(Stream):
     def sync(self, ctx):
-        self.write_page(ctx.client.request(self.tap_stream_id))
+        self.write_page(ctx, ctx.client.request(self.tap_stream_id))
 
 
 class Agents(Stream):
+    tap_stream_id = 'agents'
+    pk_fields = ["id"]
+
     def sync(self, ctx):
         since_id_offset = [self.tap_stream_id, "offset", "id"]
         since_id = ctx.bookmark(since_id_offset) or 0
@@ -59,7 +72,7 @@ class Agents(Stream):
             page = ctx.client.request(self.tap_stream_id, params)
             if not page:
                 break
-            self.write_page(page)
+            self.write_page(ctx, page)
             since_id = page[-1]["id"] + 1
             ctx.set_bookmark(since_id_offset, since_id)
             ctx.write_state()
@@ -68,6 +81,10 @@ class Agents(Stream):
 
 
 class Chats(Stream):
+    tap_stream_id = 'chats'
+    pk_fields = ["id"]
+    replication_method = 'INCREMENTAL'
+
     def _bulk_chats(self, ctx, chat_ids):
         if not chat_ids:
             return []
@@ -123,7 +140,7 @@ class Chats(Stream):
                 chat_ids = [r["id"] for r in search_resp["results"]]
                 chats = self._bulk_chats(ctx, chat_ids)
                 if chats:
-                    self.write_page(chats)
+                    self.write_page(ctx, chats)
                     max_bookmark = max(max_bookmark, *[c[ts_field] for c in chats])
                 if not next_url:
                     break
@@ -137,7 +154,7 @@ class Chats(Stream):
             if not last_sync:
                 LOGGER.info("Running full sync of chats: no last sync time")
                 return True
-            next_sync = dt_parse(last_sync) + timedelta(days=int(sync_days))
+            next_sync = utils.strptime_to_utc(last_sync) + timedelta(days=int(sync_days))
             if next_sync <= ctx.now:
                 LOGGER.info("Running full sync of chats: "
                             "last sync was {}, configured to run every {} days"
@@ -147,46 +164,69 @@ class Chats(Stream):
 
     def sync(self, ctx):
         full_sync = self._should_run_full_sync(ctx)
-        self._pull(ctx, "chat", "end_timestamp", full_sync=full_sync),
+        self._pull(ctx, "chat", "end_timestamp", full_sync=full_sync)
         self._pull(ctx, "offline_msg", "timestamp", full_sync=full_sync)
         if full_sync:
             ctx.state["chats_last_full_sync"] = ctx.now.isoformat()
             ctx.write_state()
 
 
+class Shortcuts(Everything):
+    tap_stream_id = 'shortcuts'
+    pk_fields = ["name"]
+    replication_method = 'FULL_TABLE'
+
+
 class Triggers(Stream):
+    tap_stream_id = 'triggers'
+    pk_fields = ["id"]
+    replication_method = 'FULL_TABLE'
+
     def sync(self, ctx):
         page = ctx.client.request(self.tap_stream_id)
         for trigger in page:
             definition = trigger["definition"]
             for k in ["condition", "actions"]:
                 definition[k] = json.dumps(definition[k])
-        self.write_page(page)
+        self.write_page(ctx, page)
 
 
 class Bans(Stream):
+    tap_stream_id = 'bans'
+    pk_fields = ['id']
+    replication_method = 'FULL_TABLE'
+
     def sync(self, ctx):
         response = ctx.client.request(self.tap_stream_id)
         page = response["visitor"] + response["ip_address"]
-        self.write_page(page)
+        self.write_page(ctx, page)
+
+
+class Departments(Everything):
+    tap_stream_id = 'departments'
+    pk_fields = ["id"]
+    replication_method = 'FULL_TABLE'
+
+
+class Goals(Everything):
+    tap_stream_id = 'goals'
+    pk_fields = ["id"]
+    replication_method = 'FULL_TABLE'
 
 
 class Account(Stream):
+    tap_stream_id = 'account'
+    pk_fields = ['account_key']
+    replication_method = 'FULL_TABLE'
+
     def sync(self, ctx):
         # The account endpoint returns a single item, so we have to wrap it in
         # a list to write a "page"
-        self.write_page([ctx.client.request(self.tap_stream_id)])
+        self.write_page(ctx, [ctx.client.request(self.tap_stream_id)])
 
-DEPARTMENTS = Everything("departments", ["id"])
-ACCOUNT = Account("account", ["account_key"])
-all_streams = [
-    Agents("agents", ["id"]),
-    Chats("chats", ["id"]),
-    Everything("shortcuts", ["name"]),
-    Triggers("triggers", ["id"]),
-    Bans("bans", ["id"]),
-    DEPARTMENTS,
-    Everything("goals", ["id"]),
-    ACCOUNT,
-]
-all_stream_ids = [s.tap_stream_id for s in all_streams]
+
+STREAM_OBJECTS = {
+    cls.tap_stream_id: cls
+    for cls in globals().values()
+    if inspect.isclass(cls) and issubclass(cls, Stream) and cls.tap_stream_id
+}
