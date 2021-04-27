@@ -1,10 +1,8 @@
 from datetime import datetime
-from .http import Client
 import singer
-from datetime import datetime
+from .http import Client
 
-
-class Context(object):
+class Context:
     def __init__(self, config, state, catalog):
         self.config = config
         self.state = state

@@ -1,9 +1,8 @@
-from singer import metrics
-from pendulum import parse as dt_parse
-import time
 from datetime import datetime, timedelta
 import json
+from pendulum import parse as dt_parse
 import singer
+from singer import metrics
 
 LOGGER = singer.get_logger()
 
@@ -17,7 +16,7 @@ def break_into_intervals(days, start_time: str, now: datetime):
         start_dt = end_dt
 
 
-class Stream(object):
+class Stream:
     """Information about and functions for syncing streams.
 
     Important class properties:
@@ -35,7 +34,7 @@ class Stream(object):
             counter.increment(len(page))
 
     def format_response(self, response):
-        return [response] if type(response) != list else response
+        return [response] if isinstance(response, list) else response
 
     def write_page(self, page):
         """Formats a list of records in place and outputs the data to
@@ -112,7 +111,7 @@ class Chats(Stream):
         interval_days_str = ctx.config.get("chat_search_interval_days")
         if interval_days_str is not None:
             interval_days = int(interval_days_str)
-        LOGGER.info("Using chat_search_interval_days: {}".format(interval_days))
+        LOGGER.info("Using chat_search_interval_days: %s", interval_days)
 
         intervals = break_into_intervals(interval_days, start_time, ctx.now)
         for start_dt, end_dt in intervals:
@@ -144,14 +143,14 @@ class Chats(Stream):
             next_sync = dt_parse(last_sync) + timedelta(days=int(sync_days))
             if next_sync <= ctx.now:
                 LOGGER.info("Running full sync of chats: "
-                            "last sync was {}, configured to run every {} days"
-                            .format(last_sync, sync_days))
+                            "last sync was %s, configured to run every %s days",
+                            last_sync, sync_days)
                 return True
         return False
 
     def sync(self, ctx):
         full_sync = self._should_run_full_sync(ctx)
-        self._pull(ctx, "chat", "end_timestamp", full_sync=full_sync),
+        self._pull(ctx, "chat", "end_timestamp", full_sync=full_sync)
         self._pull(ctx, "offline_msg", "timestamp", full_sync=full_sync)
         if full_sync:
             ctx.state["chats_last_full_sync"] = ctx.now.isoformat()
