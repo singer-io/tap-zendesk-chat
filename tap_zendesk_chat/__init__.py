@@ -61,7 +61,7 @@ def discover(config):
             and stream.tap_stream_id == streams_.ACCOUNT.tap_stream_id):
             continue
         raw_schema = load_schema(stream.tap_stream_id)
-        mdata = build_metadata(raw_schema)
+        mdata = build_metadata(raw_schema, stream)
         schema = Schema.from_dict(raw_schema)
         catalog.streams.append(CatalogEntry(
             stream=stream.tap_stream_id,
@@ -72,10 +72,17 @@ def discover(config):
         ))
     return catalog
 
-def build_metadata(raw_schema):
+def build_metadata(raw_schema, stream):
+
     mdata = metadata.new()
+    metadata.write(mdata, (), 'valid-replication-keys', list(stream.replication_key))
+    metadata.write(mdata, (), 'table-key-properties', list(stream.pk_fields))
     for prop in raw_schema['properties'].keys():
-        metadata.write(mdata, ('properties', prop), 'inclusion', 'automatic')
+        if prop in stream.replication_key or prop in stream.pk_fields:
+            metadata.write(mdata, ('properties', prop), 'inclusion', 'automatic')
+        else:
+            metadata.write(mdata, ('properties', prop), 'inclusion', 'available')
+
     return mdata
 
 

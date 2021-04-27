@@ -24,6 +24,8 @@ class Stream(object):
 
     :var tap_stream_id:
     :var pk_fields: A list of primary key fields"""
+
+    replication_key = set()
     def __init__(self, tap_stream_id, pk_fields):
         self.tap_stream_id = tap_stream_id
         self.pk_fields = pk_fields
@@ -48,6 +50,7 @@ class Everything(Stream):
 
 
 class Agents(Stream):
+    replication_key = {'id'}
     def sync(self, ctx):
         since_id_offset = [self.tap_stream_id, "offset", "id"]
         since_id = ctx.bookmark(since_id_offset) or 0
@@ -68,6 +71,7 @@ class Agents(Stream):
 
 
 class Chats(Stream):
+    replication_key = {'timestamp', 'end_timestamp'}
     def _bulk_chats(self, ctx, chat_ids):
         if not chat_ids:
             return []
