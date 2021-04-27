@@ -46,7 +46,6 @@ jobs:
                      --email=harrison+sandboxtest@stitchdata.com \
                      --password=$SANDBOX_PASSWORD \
                      --client-id=50 \
-                     #TODO Make this work
                      tests
       - slack/notify-on-failure:
           only_for_branches: master
