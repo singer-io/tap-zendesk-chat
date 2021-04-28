@@ -1,0 +1,69 @@
+version: 2.1
+orbs:
+  slack: circleci/slack@3.4.2
+
+jobs:
+  build:
+    docker:
+      - image: 218546966473.dkr.ecr.us-east-1.amazonaws.com/circle-ci:tap-tester-v4
+    steps:
+      - checkout
+      - run:
+          name: 'Setup virtual env'
+          command: |
+
+            python3 -mvenv /usr/local/share/virtualenvs/tap-zendesk-chat
+            source /usr/local/share/virtualenvs/tap-zendesk-chat/bin/activate
+            pip install -U 'pip<19.2' 'setuptools<51.0.0'
+            pip install .[dev]
+      - run:
+          name: 'pylint'
+          command: |
+            source /usr/local/share/virtualenvs/tap-zendesk-chat/bin/activate
+            pylint tap_zendesk_chat -d 'broad-except,chained-comparison,empty-docstring,fixme,invalid-name,line-too-long,missing-class-docstring,missing-function-docstring,missing-module-docstring,no-else-raise,no-else-return,too-few-public-methods,too-many-arguments,too-many-branches,too-many-lines,too-many-locals,ungrouped-imports,wrong-spelling-in-comment,wrong-spelling-in-docstring,no-self-use'
+      - run:
+          name: 'JSON Validator'
+          command: |
+
+            source /usr/local/share/virtualenvs/tap-tester/bin/activate
+            stitch-validate-json tap_zendesk_chat/schemas/*.json
+      - add_ssh_keys
+      - run:
+          name: 'Unit Tests'
+          command: |
+            source /usr/local/share/virtualenvs/tap-zendesk-chat/bin/activate
+            nosetests tests/unittests
+      - run:
+          name: 'Integration Tests'
+          command: |
+
+            aws s3 cp s3://com-stitchdata-dev-deployment-assets/environments/tap-tester/tap_tester_sandbox dev_env.sh
+            source dev_env.sh
+            source /usr/local/share/virtualenvs/tap-tester/bin/activate
+            run-test --tap=tap-zendesk-chat \
+                     --target=target-stitch \
+                     --orchestrator=stitch-orchestrator \
+                     --email=harrison+sandboxtest@stitchdata.com \
+                     --password=$SANDBOX_PASSWORD \
+                     --client-id=50 \
+                     tests
+      - slack/notify-on-failure:
+          only_for_branches: master
+
+workflows:
+  version: 2
+  commit:
+    jobs:
+      - build:
+          context: circleci-user
+  build_daily:
+    triggers:
+      - schedule:
+          cron: "0 14 * * *"
+          filters:
+            branches:
+              only:
+                - master
+    jobs:
+      - build:
+          context: circleci-user

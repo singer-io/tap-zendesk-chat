@@ -9,7 +9,7 @@ class RateLimitException(Exception):
     pass
 
 
-class Client(object):
+class Client:
     def __init__(self, config):
         # self.session = requests.Session()
         self.access_token = config["access_token"]
@@ -20,7 +20,9 @@ class Client(object):
                           RateLimitException,
                           max_tries=10,
                           factor=2)
-    def request(self, tap_stream_id, params={}, url=None, url_extra=""):
+    def request(self, tap_stream_id, params=None, url=None, url_extra=""):
+        if not params:
+            params={}
         with metrics.http_request_timer(tap_stream_id) as timer:
             url = url or BASE_URL + "/api/v2/" + tap_stream_id + url_extra
             headers = {"Authorization": "Bearer " + self.access_token}
