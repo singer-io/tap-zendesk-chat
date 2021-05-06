@@ -78,7 +78,7 @@ class BaseTapTest(unittest.TestCase):
         chats_rep_key.update({self.REPLICATION_KEYS: {'timestamp', 'end_timestamp'}, self.REPLICATION_METHOD: self.INCREMENTAL})
 
         agents_rep_key = default.copy()
-        agents_rep_key.update({self.REPLICATION_KEYS: {'id'}, self.REPLICATION_METHOD: self.INCREMENTAL})
+        agents_rep_key.update({self.REPLICATION_KEYS: {'id'}, self.REPLICATION_METHOD: self.FULL})
         return {
             "agents": agents_rep_key,
             "chats": chats_rep_key,
@@ -114,6 +114,12 @@ class BaseTapTest(unittest.TestCase):
         return {table: self.expected_primary_keys().get(table) | self.expected_replication_keys().get(table)
                 for table in self.expected_metadata()}
 
+    def expected_replication_method(self):
+        """return a dictionary with key of table name nd value of replication method"""
+        return {table: properties.get(self.REPLICATION_METHOD, None)
+                for table, properties
+                in self.expected_metadata().items()}
+
     def setUp(self):
         """Verify that you have set the prerequisites to run the tap (creds, etc.)"""
         env_keys = {'TAP_ZENDESK_CHAT_ACCESS_TOKEN'}
@@ -124,6 +130,24 @@ class BaseTapTest(unittest.TestCase):
     #########################
     #   Helper Methods      #
     #########################
+
+    def run_sync(self, conn_id):
+        """
+        Run a sync job and make sure it exited properly.
+        Return a dictionary with keys of streams synced
+        and values of records synced for each stream
+        """
+        # Run a sync job using orchestrator
+        sync_job_name = runner.run_sync_mode(self, conn_id)
+
+        # Verify tap and target exit codes
+        exit_status = menagerie.get_exit_status(conn_id, sync_job_name)
+        menagerie.verify_sync_exit_status(self, exit_status, sync_job_name)
+
+        # Verify actual rows were synced
+        sync_record_count = runner.examine_target_output_file(
+            self, conn_id, self.expected_streams(), self.expected_primary_keys())
+        return sync_record_count
 
     @staticmethod
     def local_to_utc(date: dt):
@@ -145,27 +169,44 @@ class BaseTapTest(unittest.TestCase):
         string compared which works for ISO date-time strings.
         """
         max_bookmarks = {}
-
+        chats_offline = []
+        chats = []
         for stream, batch in sync_records.items():
             upsert_messages = [m for m in batch.get('messages') if m['action'] == 'upsert']
+            if stream == "chats":
+                for msg in upsert_messages:
+                    if msg['data']['type'] == 'chat':
+                        chats.append(msg)
+                    elif msg['data']['type'] == 'offline_msg':
+                        chats_offline.append(msg)
+                    else:
+                        raise RuntimeError("Got unexpected chat type: " + msg['data']['type'])
+                chats_bookmark_key = "end_timestamp"
+                chats_offline_bookmark_key = "timestamp"
+                bk_values_chats = [message["data"].get(chats_bookmark_key) for message in chats]
+                bk_values_chats_offline = [message["data"].get(chats_offline_bookmark_key) for message in chats_offline]
+                max_bookmarks['chats.chat'] = {chats_bookmark_key : max(bk_values_chats, default=None)}
+                max_bookmarks['chats.offline_msg'] = {chats_offline_bookmark_key : max(bk_values_chats_offline, default=None)}
+            else:
 
-            stream_bookmark_key = self.expected_replication_keys().get(stream) or set()
-            assert not stream_bookmark_key or len(stream_bookmark_key) == 1  # There shouldn't be a compound replication key
-            if not stream_bookmark_key:
-                continue
-            stream_bookmark_key = stream_bookmark_key.pop()
-
-            bk_values = [message["data"].get(stream_bookmark_key) for message in upsert_messages]
-            max_bookmarks[stream] = {stream_bookmark_key: None}
-            for bk_value in bk_values:
-                if bk_value is None:
+                stream_bookmark_key = self.expected_replication_keys().get(stream) or set()
+                with self.subTest(stream=stream):
+                    assert not stream_bookmark_key or len(stream_bookmark_key) == 1  # There shouldn't be a compound replication key
+                if not stream_bookmark_key:
                     continue
+                stream_bookmark_key = stream_bookmark_key.pop()
 
-                if max_bookmarks[stream][stream_bookmark_key] is None:
-                    max_bookmarks[stream][stream_bookmark_key] = bk_value
+                bk_values = [message["data"].get(stream_bookmark_key) for message in upsert_messages]
+                max_bookmarks[stream] = {stream_bookmark_key: None}
+                for bk_value in bk_values:
+                    if bk_value is None:
+                        continue
 
-                if bk_value > max_bookmarks[stream][stream_bookmark_key]:
-                    max_bookmarks[stream][stream_bookmark_key] = bk_value
+                    if max_bookmarks[stream][stream_bookmark_key] is None:
+                        max_bookmarks[stream][stream_bookmark_key] = bk_value
+
+                    if bk_value > max_bookmarks[stream][stream_bookmark_key]:
+                        max_bookmarks[stream][stream_bookmark_key] = bk_value
         return max_bookmarks
 
 
@@ -174,26 +215,43 @@ class BaseTapTest(unittest.TestCase):
         Return the minimum value for the replication key for each stream
         """
         min_bookmarks = {}
+        chats = []
+        chats_offline = []
         for stream, batch in sync_records.items():
             upsert_messages = [m for m in batch.get('messages') if m['action'] == 'upsert']
-
-            stream_bookmark_key = self.expected_replication_keys().get(stream) or set()
-            assert not stream_bookmark_key or len(stream_bookmark_key) == 1  # There shouldn't be a compound replication key
-            if not stream_bookmark_key:
-                continue
-            stream_bookmark_key = stream_bookmark_key.pop()
-
-            bk_values = [message["data"].get(stream_bookmark_key) for message in upsert_messages]
-            min_bookmarks[stream] = {stream_bookmark_key: None}
-            for bk_value in bk_values:
-                if bk_value is None:
+            if stream == "chats":
+                for msg in upsert_messages:
+                    if msg['data']['type'] == 'chat':
+                        chats.append(msg)
+                    elif msg['data']['type'] == 'offline_msg':
+                        chats_offline.append(msg)
+                    else:
+                        raise RuntimeError("Got unexpected chat type: " + msg['data']['type'])
+                chats_bookmark_key = "end_timestamp"
+                chats_offline_bookmark_key = "timestamp"
+                bk_values_chats = [message["data"].get(chats_bookmark_key) for message in chats]
+                bk_values_chats_offline = [message["data"].get(chats_offline_bookmark_key) for message in chats_offline]
+                min_bookmarks['chats.chat'] = {chats_bookmark_key : min(bk_values_chats, default=None)}
+                min_bookmarks['chats.offline_msg'] = {chats_offline_bookmark_key : min(bk_values_chats_offline, default=None)}
+            else:
+                stream_bookmark_key = self.expected_replication_keys().get(stream) or set()
+                with self.subTest(stream=stream):
+                    assert not stream_bookmark_key or len(stream_bookmark_key) == 1  # There shouldn't be a compound replication key
+                if not stream_bookmark_key:
                     continue
+                stream_bookmark_key = stream_bookmark_key.pop()
 
-                if min_bookmarks[stream][stream_bookmark_key] is None:
-                    min_bookmarks[stream][stream_bookmark_key] = bk_value
+                bk_values = [message["data"].get(stream_bookmark_key) for message in upsert_messages]
+                min_bookmarks[stream] = {stream_bookmark_key: None}
+                for bk_value in bk_values:
+                    if bk_value is None:
+                        continue
 
-                if bk_value < min_bookmarks[stream][stream_bookmark_key]:
-                    min_bookmarks[stream][stream_bookmark_key] = bk_value
+                    if min_bookmarks[stream][stream_bookmark_key] is None:
+                        min_bookmarks[stream][stream_bookmark_key] = bk_value
+
+                    if bk_value < min_bookmarks[stream][stream_bookmark_key]:
+                        min_bookmarks[stream][stream_bookmark_key] = bk_value
         print(min_bookmarks)
         return min_bookmarks
 
@@ -221,6 +279,19 @@ class BaseTapTest(unittest.TestCase):
                 conn_id, catalog, schema, additional_md=additional_md,
                 non_selected_fields=non_selected_properties
             )
+
+    def create_connection(self, original_properties: bool = True, original_credentials: bool = True):
+        """Create a new connection with the test name"""
+        # Create the connection
+        conn_id = connections.ensure_connection(self, original_properties, original_credentials)
+
+        # Run a check job using orchestrator (discovery)
+        check_job_name = runner.run_check_mode(self, conn_id)
+
+        # Assert that the check job succeeded
+        exit_status = menagerie.get_exit_status(conn_id, check_job_name)
+        menagerie.verify_check_exit_status(self, exit_status, check_job_name)
+        return conn_id
 
     @staticmethod
     def get_selected_fields_from_metadata(metadata):
