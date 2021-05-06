@@ -49,7 +49,6 @@ class Everything(Stream):
 
 
 class Agents(Stream):
-    replication_key = {'id'}
     def sync(self, ctx):
         since_id_offset = [self.tap_stream_id, "offset", "id"]
         since_id = ctx.bookmark(since_id_offset) or 0

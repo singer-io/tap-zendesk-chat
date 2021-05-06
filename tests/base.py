@@ -77,10 +77,8 @@ class BaseTapTest(unittest.TestCase):
         chats_rep_key = default.copy()
         chats_rep_key.update({self.REPLICATION_KEYS: {'timestamp', 'end_timestamp'}, self.REPLICATION_METHOD: self.INCREMENTAL})
 
-        agents_rep_key = default.copy()
-        agents_rep_key.update({self.REPLICATION_KEYS: {'id'}, self.REPLICATION_METHOD: self.FULL})
         return {
-            "agents": agents_rep_key,
+            "agents": default,
             "chats": chats_rep_key,
             "shortcuts": shortcuts_rep_key,
             "triggers": default,
