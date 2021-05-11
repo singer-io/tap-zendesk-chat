@@ -110,6 +110,5 @@
   ],
   "tap_schema_dependencies": [
     "chat_conversion"
-  ],
-  "additionalProperties": true
+  ]
 }

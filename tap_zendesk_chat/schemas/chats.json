@@ -106,8 +106,7 @@
         "type": [
           "null",
           "object"
-        ],
-        "additionalProperties": true
+        ]
     },
     "history": {
       "items": {
@@ -188,7 +187,6 @@
       ]
     }
   },
-  "additionalProperties": false,
   "type": [
     "null",
     "object"
