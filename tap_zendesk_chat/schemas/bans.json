@@ -39,6 +39,5 @@
         "string"
       ]
     }
-  },
-  "additionalProperties": false
+  }
 }
