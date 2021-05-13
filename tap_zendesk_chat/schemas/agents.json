@@ -66,6 +66,11 @@
       ]
     },
     "enabled_departments": {
+      "items": {
+        "type": [
+          "integer"
+        ]
+      },
       "type": [
         "null",
         "array"
