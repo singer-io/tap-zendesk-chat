@@ -1,5 +1,4 @@
 from datetime import datetime, timedelta
-import json
 from pendulum import parse as dt_parse
 import singer
 from singer import metrics, Transformer, metadata
