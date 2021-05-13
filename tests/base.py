@@ -68,14 +68,28 @@ class BaseTapTest(unittest.TestCase):
             self.REPLICATION_METHOD: self.FULL,
         }
 
-        shortcuts_rep_key = default.copy()
-        shortcuts_rep_key.update({self.PRIMARY_KEYS: {"name"}})
+        shortcuts_rep_key = {
+            self.PRIMARY_KEYS: {"name"},
+            self.REPLICATION_METHOD: self.FULL
+        }
 
-        account_rep_key = default.copy()
-        account_rep_key.update({self.PRIMARY_KEYS: {"account_key"}})
 
-        chats_rep_key = default.copy()
-        chats_rep_key.update({self.REPLICATION_KEYS: {'timestamp', 'end_timestamp'}, self.REPLICATION_METHOD: self.INCREMENTAL})
+        account_rep_key = {
+            self.PRIMARY_KEYS: {"account_key"},
+            self.REPLICATION_METHOD: self.FULL
+        }
+
+        chats_rep_key = {
+            self.PRIMARY_KEYS: {"id"},
+            self.REPLICATION_KEYS: {'timestamp', 'end_timestamp'},
+            self.REPLICATION_METHOD: self.INCREMENTAL
+        }
+
+        agents_rep_key = {
+            self.PRIMARY_KEYS: {"id"},
+            self.REPLICATION_METHOD: self.FULL,
+            self.REPLICATION_KEYS: {'id'}
+        }
 
         return {
             "agents": default,
@@ -318,6 +332,7 @@ class BaseTapTest(unittest.TestCase):
         menagerie.verify_check_exit_status(self, exit_status, check_job_name)
 
         found_catalogs = menagerie.get_catalogs(conn_id)
+
         self.assertGreater(len(found_catalogs), 0, msg="unable to locate schemas for connection {}".format(conn_id))
         found_catalog_names = set(map(lambda c: c['tap_stream_id'], found_catalogs))
         diff = self.expected_streams().symmetric_difference(found_catalog_names)
