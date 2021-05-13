@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.3.0
+  * Added field selection support [#29](https://github.com/singer-io/tap-zendesk-chat/pull/29)
+
 ## 0.2.1
   * Added `enabled_departments` to the JSON Schema for agents [#27](https://github.com/singer-io/tap-zendesk-chat/pull/27)
 
