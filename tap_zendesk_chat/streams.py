@@ -2,7 +2,7 @@ from datetime import datetime, timedelta
 import json
 from pendulum import parse as dt_parse
 import singer
-from singer import metrics
+from singer import metrics, Transformer, metadata
 
 LOGGER = singer.get_logger()
 
@@ -45,25 +45,35 @@ class Stream:
 
 class Everything(Stream):
     def sync(self, ctx):
-        self.write_page(ctx.client.request(self.tap_stream_id))
+        with Transformer() as transformer:
+            schema = ctx.catalog.get_stream(self.tap_stream_id).schema.to_dict()
+            m_data = metadata.to_map(ctx.catalog.get_stream(self.tap_stream_id).metadata)
+            response = ctx.client.request(self.tap_stream_id)
+            page = [transformer.transform(rec, schema, metadata=m_data) for rec in response]
+            self.write_page(page)
 
 
 class Agents(Stream):
     def sync(self, ctx):
         since_id_offset = [self.tap_stream_id, "offset", "id"]
         since_id = ctx.bookmark(since_id_offset) or 0
-        while True:
-            params = {
-                "since_id": since_id,
-                "limit": ctx.config.get("agents_page_limit", 100),
-            }
-            page = ctx.client.request(self.tap_stream_id, params)
-            if not page:
-                break
-            self.write_page(page)
-            since_id = page[-1]["id"] + 1
-            ctx.set_bookmark(since_id_offset, since_id)
-            ctx.write_state()
+        schema = ctx.catalog.get_stream(self.tap_stream_id).schema.to_dict()
+        m_data = metadata.to_map(ctx.catalog.get_stream(self.tap_stream_id).metadata)
+
+        with Transformer() as transformer:
+            while True:
+                params = {
+                    "since_id": since_id,
+                    "limit": ctx.config.get("agents_page_limit", 100),
+                }
+                page = ctx.client.request(self.tap_stream_id, params)
+                if not page:
+                    break
+                page = [transformer.transform(rec, schema, metadata=m_data) for rec in page]
+                self.write_page(page)
+                since_id = page[-1]["id"] + 1
+                ctx.set_bookmark(since_id_offset, since_id)
+                ctx.write_state()
         ctx.set_bookmark(since_id_offset, None)
         ctx.write_state()
 
@@ -105,7 +115,8 @@ class Chats(Stream):
         start_time = ctx.update_start_date_bookmark(ts_bookmark_key)
         next_url = ctx.bookmark(url_offset_key)
         max_bookmark = start_time
-
+        schema = ctx.catalog.get_stream(self.tap_stream_id).schema.to_dict()
+        m_data = metadata.to_map(ctx.catalog.get_stream(self.tap_stream_id).metadata)
         interval_days = 14
         interval_days_str = ctx.config.get("chat_search_interval_days")
         if interval_days_str is not None:
@@ -113,24 +124,26 @@ class Chats(Stream):
         LOGGER.info("Using chat_search_interval_days: %s", interval_days)
 
         intervals = break_into_intervals(interval_days, start_time, ctx.now)
-        for start_dt, end_dt in intervals:
-            while True:
-                if next_url:
-                    search_resp = ctx.client.request(self.tap_stream_id, url=next_url)
-                else:
-                    search_resp = self._search(ctx, chat_type, ts_field, start_dt, end_dt)
-                next_url = search_resp["next_url"]
-                ctx.set_bookmark(url_offset_key, next_url)
+        with Transformer() as transformer:
+            for start_dt, end_dt in intervals:
+                while True:
+                    if next_url:
+                        search_resp = ctx.client.request(self.tap_stream_id, url=next_url)
+                    else:
+                        search_resp = self._search(ctx, chat_type, ts_field, start_dt, end_dt)
+                    next_url = search_resp["next_url"]
+                    ctx.set_bookmark(url_offset_key, next_url)
+                    ctx.write_state()
+                    chat_ids = [r["id"] for r in search_resp["results"]]
+                    chats = self._bulk_chats(ctx, chat_ids)
+                    if chats:
+                        chats = [transformer.transform(rec, schema, metadata=m_data) for rec in chats]
+                        self.write_page(chats)
+                        max_bookmark = max(max_bookmark, *[c[ts_field] for c in chats])
+                    if not next_url:
+                        break
+                ctx.set_bookmark(ts_bookmark_key, max_bookmark)
                 ctx.write_state()
-                chat_ids = [r["id"] for r in search_resp["results"]]
-                chats = self._bulk_chats(ctx, chat_ids)
-                if chats:
-                    self.write_page(chats)
-                    max_bookmark = max(max_bookmark, *[c[ts_field] for c in chats])
-                if not next_url:
-                    break
-            ctx.set_bookmark(ts_bookmark_key, max_bookmark)
-            ctx.write_state()
 
     def _should_run_full_sync(self, ctx):
         sync_days = ctx.config.get("chats_full_sync_days")
@@ -156,28 +169,28 @@ class Chats(Stream):
             ctx.write_state()
 
 
-class Triggers(Stream):
-    def sync(self, ctx):
-        page = ctx.client.request(self.tap_stream_id)
-        for trigger in page:
-            definition = trigger["definition"]
-            for k in ["condition", "actions"]:
-                definition[k] = json.dumps(definition[k])
-        self.write_page(page)
-
-
 class Bans(Stream):
     def sync(self, ctx):
-        response = ctx.client.request(self.tap_stream_id)
-        page = response["visitor"] + response["ip_address"]
-        self.write_page(page)
+        with Transformer() as transformer:
+            schema = ctx.catalog.get_stream(self.tap_stream_id).schema.to_dict()
+            m_data = metadata.to_map(ctx.catalog.get_stream(self.tap_stream_id).metadata)
+            response = ctx.client.request(self.tap_stream_id)
+            page = response["visitor"] + response["ip_address"]
+            page = [transformer.transform(rec, schema, metadata=m_data) for rec in page]
+            self.write_page(page)
 
 
 class Account(Stream):
     def sync(self, ctx):
         # The account endpoint returns a single item, so we have to wrap it in
         # a list to write a "page"
-        self.write_page([ctx.client.request(self.tap_stream_id)])
+        with Transformer() as transformer:
+            schema = ctx.catalog.get_stream(self.tap_stream_id).schema.to_dict()
+            m_data = metadata.to_map(ctx.catalog.get_stream(self.tap_stream_id).metadata)
+            response = ctx.client.request(self.tap_stream_id)
+            page = transformer.transform(response, schema, metadata=m_data)
+            self.write_page([page])
+
 
 DEPARTMENTS = Everything("departments", ["id"])
 ACCOUNT = Account("account", ["account_key"])
@@ -185,7 +198,7 @@ all_streams = [
     Agents("agents", ["id"]),
     Chats("chats", ["id"]),
     Everything("shortcuts", ["name"]),
-    Triggers("triggers", ["id"]),
+    Everything("triggers", ["id"]),
     Bans("bans", ["id"]),
     DEPARTMENTS,
     Everything("goals", ["id"]),
