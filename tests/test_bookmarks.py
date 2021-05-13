@@ -29,20 +29,9 @@ class BookmarksTest(BaseTapTest):
 
         return return_value
 
-    @staticmethod
-    def convert_state_to_utc(date_str):
-        """
-        Convert a saved bookmark value of the form '2020-08-25T13:17:36-07:00' to
-        a string formatted utc datetime,
-        in order to compare aginast json formatted datetime values
-        """
-        date_object = dateutil.parser.parse(date_str)
-        date_object_utc = date_object.astimezone(tz=pytz.UTC)
-        return datetime.datetime.strftime(date_object_utc, "%Y-%m-%dT%H:%M:%SZ")
 
     def test_run(self):
         expected_streams =  self.expected_streams()
-        #bookmarking_streams = ['chats']
 
         # Testing against ads insights objects
         self.start_date = self.get_properties()['start_date']
@@ -69,17 +58,6 @@ class BookmarksTest(BaseTapTest):
         first_sync_records = runner.get_records_from_target_output()
         first_sync_bookmarks = menagerie.get_state(conn_id)
 
-        ##########################################################################
-        ### Update State Between Syncs
-        ##########################################################################
-
-        # new_states = {'bookmarks': dict()}
-        # import ipdb; ipdb.set_trace()
-        # 1+1
-        # simulated_states = self.calculated_states_by_stream(first_sync_bookmarks)
-        # for stream, new_state in simulated_states.items():
-        #     new_states['bookmarks'][stream] = new_state
-        # menagerie.set_state(conn_id, new_states)
 
         ##########################################################################
         ### Second Sync
@@ -127,13 +105,13 @@ class BookmarksTest(BaseTapTest):
                     self.assertIsNotNone(second_bookmark_key_value)
                     self.assertIsNotNone(second_bookmark_key_value.get('chat.end_timestamp'))
                     self.assertIsNotNone(second_bookmark_key_value.get('offline_msg.timestamp'))
+
                     # Verify the second sync bookmark is Equal to the first sync bookmark
                     self.assertEqual(second_bookmark_key_value, first_bookmark_key_value) # assumes no changes to data during test
 
                     for record in second_sync_messages:
 
                         if record.get('type') == 'chat':
-
                             # Verify the second sync records respect the previous (simulated) bookmark value
                             replication_key_value = record.get('end_timestamp')
 
@@ -142,6 +120,7 @@ class BookmarksTest(BaseTapTest):
                                 replication_key_value,
                                 second_bookmark_key_value.get('chat.end_timestamp'),
                                 msg="Second sync bookmark was set incorrectly, a record with a greater replication-key value was synced.")
+
                         elif record.get('type') == 'offline_msg':
                             # Verify the second sync records respect the previous (simulated) bookmark value
                             replication_key_value = record.get('timestamp')
@@ -155,7 +134,6 @@ class BookmarksTest(BaseTapTest):
                         else:
                             assert(False)
 
-
                     for record in first_sync_messages:
                         if record.get('type') == 'chat':
                             # Verify the first sync records respect the previous (simulated) bookmark value
@@ -166,6 +144,7 @@ class BookmarksTest(BaseTapTest):
                                 replication_key_value,
                                 first_bookmark_key_value.get('chat.end_timestamp'),
                                 msg="First sync bookmark was set incorrectly, a record with a greater replication-key value was synced.")
+
                         elif record.get('type') == 'offline_msg':
                             # Verify the first sync records respect the previous (simulated) bookmark value
                             replication_key_value = record.get('timestamp')
@@ -195,12 +174,8 @@ class BookmarksTest(BaseTapTest):
                         self.assertIsNone(second_bookmark_key_value)
 
                 else:
-
-
                     raise NotImplementedError(
-                        "INVALID EXPECTATIONS\t\tSTREAM: {} REPLICATION_METHOD: {}".format(stream, expected_replication_method)
-                    )
-
+                        "INVALID EXPECTATIONS\t\tSTREAM: {} REPLICATION_METHOD: {}".format(stream, expected_replication_method))
 
                 # Verify at least 1 record was replicated in the second sync
                 self.assertGreater(second_sync_count, 0, msg="We are not fully testing bookmarking for {}".format(stream))
