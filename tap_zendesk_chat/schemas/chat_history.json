@@ -74,12 +74,22 @@
       ]
     },
     "tags": {
+      "items": {
+        "type": [
+          "string"
+        ]
+      },
       "type": [
         "null",
         "array"
       ]
     },
     "new_tags": {
+      "items": {
+        "type": [
+          "string"
+        ]
+      },
       "type": [
         "null",
         "array"
@@ -98,6 +108,11 @@
       ]
     },
     "skills_name": {
+      "items": {
+        "type": [
+          "string"
+        ]
+      },
       "type": [
         "null",
         "array"
