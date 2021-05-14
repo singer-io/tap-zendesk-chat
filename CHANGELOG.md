@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.0
+  * Adds field selection via transformer and increases singer-python version to `5.12.1` [#32](https://github.com/singer-io/tap-zendesk-chat/pull/32)
+  * Adds bookmarking test [#31](https://github.com/singer-io/tap-zendesk-chat/pull/31)
+  * Fixes schemas to not include `additionalProperties` and adds start date test[#30](https://github.com/singer-io/tap-zendesk-chat/pull/30)
+  * Changes metadata to allow `inclusion: available` to support field selection and adds discovery test[#29](https://github.com/singer-io/tap-zendesk-chat/pull/29)
+
 ## 0.2.1
   * Added `enabled_departments` to the JSON Schema for agents [#27](https://github.com/singer-io/tap-zendesk-chat/pull/27)
 
