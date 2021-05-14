@@ -1,5 +1,6 @@
 # Changelog
-
+## 0.3.1
+  * Adds `items` key to the array schemas [#34](https://github.com/singer-io/tap-zendesk-chat/pull/34)
 ## 0.3.0
   * Adds field selection via transformer and increases singer-python version to `5.12.1` [#32](https://github.com/singer-io/tap-zendesk-chat/pull/32)
   * Adds bookmarking test [#31](https://github.com/singer-io/tap-zendesk-chat/pull/31)
