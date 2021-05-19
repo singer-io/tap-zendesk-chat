@@ -12,6 +12,16 @@ STREAMS_WITH_BOOKMARKS = ['agents', 'chats']
 
 class BookmarksTest(BaseTapTest):
 
+    expected_record_count = {
+        'agents': 3,
+        'chats': 221,
+        'bans': 21,
+        'account': 1,
+        'shortcuts': 4,
+        'triggers': 12,
+        'departments': 1,
+        'goals': 2,
+    }
 
     @staticmethod
     def name():
@@ -20,7 +30,8 @@ class BookmarksTest(BaseTapTest):
     def get_properties(self, original: bool = True):
         """Configuration properties required for the tap."""
         return_value = {
-            'start_date': '2021-04-01T00:00:00Z',
+            'start_date': '2017-08-15T00:00:00Z',
+            'agents_page_limit': 1,
         }
         if original:
             return return_value
@@ -86,12 +97,14 @@ class BookmarksTest(BaseTapTest):
                 second_sync_messages = [record.get('data') for record in
                                         second_sync_records.get(stream).get('messages')
                                         if record.get('action') == 'upsert']
-                first_bookmark_key_value = first_sync_bookmarks.get('bookmarks', {stream: None}).get(stream)
-                second_bookmark_key_value = second_sync_bookmarks.get('bookmarks', {stream: None}).get(stream)
+                first_bookmark_key_value = first_sync_bookmarks.get('bookmarks', {}).get(stream)
+                second_bookmark_key_value = second_sync_bookmarks.get('bookmarks', {}).get(stream)
+
+                # Assert we synced the expected number of records. Ensures pagination happens
+                self.assertEqual(first_sync_count, self.expected_record_count[stream])
 
 
                 if expected_replication_method == self.INCREMENTAL: # chats is the only incremental stream
-
 
                     # collect information specific to incremental streams from syncs 1 & 2
                     replication_key = next(iter(expected_replication_keys[stream]))
