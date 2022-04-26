@@ -41,7 +41,14 @@
     },
     "webpath": {
       "items": {
-        "$ref": "chat_webpath"
+        "anyOf": [
+          {
+            "$ref": "chat_webpath"
+          },
+          {
+            "$ref": "chat_webpath_array"
+          }
+        ]
       },
       "type": [
         "null",
@@ -197,6 +204,7 @@
     "chat_history",
     "chat_response_time",
     "chat_visitor",
-    "chat_webpath"
+    "chat_webpath",
+    "chat_webpath_array"
   ]
 }

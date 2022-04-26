@@ -1,0 +1,13 @@
+{
+  "items": {
+    "type": [
+      "null",
+      "string",
+      "integer"
+    ]
+  },
+  "type": [
+    "null",
+    "array"
+  ]
+}
