@@ -1,4 +1,6 @@
 # Changelog
+## 0.3.2
+  * Resolved transform error [#41](https://github.com/singer-io/tap-zendesk-chat/pull/41)
 ## 0.3.1
   * Adds `items` key to the array schemas [#34](https://github.com/singer-io/tap-zendesk-chat/pull/34)
 ## 0.3.0
