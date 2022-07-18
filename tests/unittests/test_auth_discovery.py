@@ -41,14 +41,12 @@ class TestBasicAuthInDiscoverMode(unittest.TestCase):
             do the assertions inside exception block
         '''
         args = Args()
-        try:
+
+        with self.assertRaises(HTTPError) as e:
             tap_zendesk_chat.discover(args.config)
-        except HTTPError as e:
-            # verify the 401 status code for wrong credentials
-            self.assertEqual(e.response.status_code, 401)
-            expected_error_message = "401 Client Error: Unauthorized for url:"
-            # Verifying the message formed for the custom exception
-            self.assertIn(expected_error_message, str(e))
+        # Verifying the message formed for the custom exception
+        expected_error_message = "401 Client Error: Unauthorized for url:"
+        self.assertIn(expected_error_message, str(e.exception))
 
     @mock.patch('tap_zendesk_chat.utils', return_value=Args())
     @mock.patch('tap_zendesk_chat.discover')
