@@ -14,8 +14,8 @@ class BookmarksTest(BaseTapTest):
 
     expected_record_count = {
         'agents': 3,
-        'chats': 221,
-        'bans': 21,
+        'chats': 223,
+        'bans': 22,
         'account': 1,
         'shortcuts': 4,
         'triggers': 12,
