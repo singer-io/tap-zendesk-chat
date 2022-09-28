@@ -45,20 +45,7 @@ coverage.xml
 *,cover
 .hypothesis/
 
-# Translations
-*.mo
-*.pot
 
-# Django stuff:
-*.log
-local_settings.py
-
-# Flask stuff:
-instance/
-.webassets-cache
-
-# Scrapy stuff:
-.scrapy
 
 # Sphinx documentation
 docs/_build/
@@ -72,8 +59,6 @@ target/
 # pyenv
 .python-version
 
-# celery beat schedule file
-celerybeat-schedule
 
 # dotenv
 .env
@@ -92,11 +77,15 @@ ENV/
 ._*
 .DS_Store
 
-# Custom stuff
-env.sh
+state.json
+catalog.json
 config.json
-.autoenv.zsh
 
-rsa-key
-tags
-properties.json
+
+# VS Code files for those working on multiple tools
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+*.code-workspace
