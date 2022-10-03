@@ -1,7 +1,7 @@
 import requests
-from singer import metrics
+from singer import metrics, get_logger
 import backoff
-
+LOGGER = get_logger()
 BASE_URL = "https://www.zopim.com"
 
 
@@ -28,6 +28,7 @@ class Client:
             headers = {"Authorization": "Bearer " + self.access_token}
             if self.user_agent:
                 headers["User-Agent"] = self.user_agent
+            LOGGER.info("calling %s %s",url,params)
             request = requests.Request("GET", url, headers=headers, params=params)
             response = self.session.send(request.prepare())
             timer.tags[metrics.Tag.http_status_code] = response.status_code
