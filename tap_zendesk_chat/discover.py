@@ -65,7 +65,6 @@ def build_metadata(raw_schema, stream):
             metadata.write(mdata, ('properties', prop), 'inclusion', 'automatic')
         else:
             metadata.write(mdata, ('properties', prop), 'inclusion', 'available')
-
     return mdata
 
 

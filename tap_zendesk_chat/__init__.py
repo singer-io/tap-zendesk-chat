@@ -19,7 +19,7 @@ def main():
         discover(args.config).dump()
     else:
         ctx = Context(args.config, args.state, args.catalog or discover(args.config))
-        sync(ctx)
+        sync(ctx,args.catalog or discover(args.config),args.state)
 
 
 if __name__ == "__main__":
