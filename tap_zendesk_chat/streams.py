@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
-from pendulum import parse as dt_parse
 import singer
-from singer import metrics, Transformer, metadata
+from singer.utils import strptime_to_utc
+from singer import metrics, Transformer
 from typing import Dict
 
 LOGGER = singer.get_logger()
@@ -9,7 +9,7 @@ LOGGER = singer.get_logger()
 
 def break_into_intervals(days, start_time: str, now: datetime):
     delta = timedelta(days=days)
-    start_dt = dt_parse(start_time)
+    start_dt = strptime_to_utc(start_time)
     while start_dt < now:
         end_dt = min(start_dt + delta, now)
         yield start_dt, end_dt
@@ -143,7 +143,7 @@ class Chats(Stream):
             if not last_sync:
                 LOGGER.info("Running full sync of chats: no last sync time")
                 return True
-            next_sync = dt_parse(last_sync) + timedelta(days=int(sync_days))
+            next_sync = strptime_to_utc(last_sync) + timedelta(days=int(sync_days))
             if next_sync <= ctx.now:
                 LOGGER.info("Running full sync of chats: "
                             "last sync was %s, configured to run every %s days",

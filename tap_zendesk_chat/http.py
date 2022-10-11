@@ -16,10 +16,7 @@ class Client:
         self.user_agent = config.get("user_agent")
         self.session = requests.Session()
 
-    @backoff.on_exception(backoff.expo,
-                          RateLimitException,
-                          max_tries=10,
-                          factor=2)
+    @backoff.on_exception(backoff.expo,RateLimitException,max_tries=10,factor=2)
     def request(self, tap_stream_id, params=None, url=None, url_extra=""):
         if not params:
             params={}

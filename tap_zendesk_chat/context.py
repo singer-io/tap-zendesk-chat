@@ -1,4 +1,5 @@
 from datetime import datetime
+from singer.utils import now
 import singer
 from .http import Client
 
@@ -8,7 +9,7 @@ class Context:
         self.state = state
         self.catalog = catalog
         self.client = Client(config)
-        self.now = datetime.utcnow()
+        self.now = now()
 
     @property
     def bookmarks(self):
