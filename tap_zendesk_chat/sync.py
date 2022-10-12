@@ -1,6 +1,5 @@
 from singer import Transformer,metadata,Catalog,write_state,write_schema,set_currently_syncing,get_logger
 from . import streams
-from .http import Client
 LOGGER = get_logger()
 
 def sync(ctx,catalog: Catalog):
@@ -15,11 +14,7 @@ def sync(ctx,catalog: Catalog):
             ctx.state = set_currently_syncing(ctx.state, tap_stream_id)
             ctx.write_state()
             write_schema(tap_stream_id, stream_schema, stream_obj.pk_fields, stream.replication_key)
-            try:
-                stream_obj.sync(ctx,schema=stream_schema, stream_metadata=stream_metadata, transformer=transformer)        
-            except Exception as err:
-                LOGGER.info("%s",err)
-                stream_obj.sync(ctx)
+            stream_obj.sync(ctx,schema=stream_schema, stream_metadata=stream_metadata, transformer=transformer)        
             ctx.write_state()
 
     ctx.state = set_currently_syncing(ctx.state, None)

@@ -162,11 +162,26 @@ class Chats(Stream):
 
 class Bans(Stream):
     def sync(self, ctx, schema: Dict, stream_metadata: Dict, transformer: Transformer):
-        response = ctx.client.request(self.tap_stream_id)
-        page = response["visitor"] + response["ip_address"]
-        page = [transformer.transform(rec, schema, metadata=stream_metadata) for rec in page]
-        self.write_page(page)
+        since_id_offset = [self.tap_stream_id, "offset", "id"]
+        since_id = ctx.bookmark(since_id_offset) or 0
+        while True:
 
+            params = {
+                "since_id": since_id,
+                "limit": ctx.config.get("agents_page_limit", 100),
+                # TODO: Add Additional advanced property in connection_properties
+            }
+            response = ctx.client.request(self.tap_stream_id, params)
+            page = response.get("visitor",[]) + response.get("ip_address",[])
+            if not page:
+                break
+            page = response["visitor"] + response["ip_address"]
+            self.write_page([transformer.transform(rec, schema, metadata=stream_metadata) for rec in page])
+            since_id = page[-1]["id"] + 1
+            ctx.set_bookmark(since_id_offset, since_id)
+            ctx.write_state()
+        ctx.set_bookmark(since_id_offset, None)
+        ctx.write_state()
 
 class Account(Stream):
     def sync(self, ctx, schema: Dict, stream_metadata: Dict, transformer: Transformer):
