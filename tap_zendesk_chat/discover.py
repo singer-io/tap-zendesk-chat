@@ -1,16 +1,14 @@
 import singer
+from requests.exceptions import HTTPError
 from singer import metadata
 from singer.catalog import Catalog, CatalogEntry, Schema
-from requests.exceptions import HTTPError
-from . import streams as streams_
-from .streams import STREAMS
 
+from . import streams as streams_
 from .http import Client
+from .streams import STREAMS
 from .utils import load_schema
 
 LOGGER = singer.get_logger()
-
-
 
 
 def account_not_authorized(client):
@@ -30,23 +28,20 @@ def account_not_authorized(client):
     return False
 
 
-def build_metadata(raw_schema :dict, stream):
-
+def build_metadata(raw_schema: dict, stream):
     mdata = metadata.new()
-    metadata.write(mdata, (), 'valid-replication-keys', list(stream.replication_key))
-    metadata.write(mdata, (), 'table-key-properties', list(stream.pk_fields))
-    for prop in raw_schema['properties'].keys():
+    metadata.write(mdata, (), "valid-replication-keys", list(stream.replication_key))
+    metadata.write(mdata, (), "table-key-properties", list(stream.pk_fields))
+    for prop in raw_schema["properties"].keys():
         if prop in stream.replication_key or prop in stream.pk_fields:
-            metadata.write(mdata, ('properties', prop), 'inclusion', 'automatic')
+            metadata.write(mdata, ("properties", prop), "inclusion", "automatic")
         else:
-            metadata.write(mdata, ('properties', prop), 'inclusion', 'available')
+            metadata.write(mdata, ("properties", prop), "inclusion", "available")
     return metadata.to_list(mdata)
 
 
-def discover(config :dict) -> Catalog:
-    """
-    discover function for tap-zendesk-chat
-    """
+def discover(config: dict) -> Catalog:
+    """discover function for tap-zendesk-chat."""
     if config:
         client = Client(config)
         # perform auth
@@ -61,9 +56,7 @@ def discover(config :dict) -> Catalog:
                 "stream": stream_name,
                 "tap_stream_id": stream.tap_stream_id,
                 "schema": schema,
-                "metadata": build_metadata(schema,stream),
+                "metadata": build_metadata(schema, stream),
             }
         )
     return Catalog.from_dict({"streams": streams})
-
-

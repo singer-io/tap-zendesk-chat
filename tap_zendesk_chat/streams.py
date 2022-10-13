@@ -1,19 +1,13 @@
 from datetime import datetime, timedelta
-import singer
-from singer.utils import strptime_to_utc
-from singer import metrics, Transformer
 from typing import Dict
 
+import singer
+from singer import Transformer, metrics
+from singer.utils import strptime_to_utc
+
+from .utils import break_into_intervals
+
 LOGGER = singer.get_logger()
-
-
-def break_into_intervals(days, start_time: str, now: datetime):
-    delta = timedelta(days=days)
-    start_dt = strptime_to_utc(start_time)
-    while start_dt < now:
-        end_dt = min(start_dt + delta, now)
-        yield start_dt, end_dt
-        start_dt = end_dt
 
 
 class Stream:
@@ -22,9 +16,11 @@ class Stream:
     Important class properties:
 
     :var tap_stream_id:
-    :var pk_fields: A list of primary key fields"""
+    :var pk_fields: A list of primary key fields
+    """
 
     replication_key = set()
+
     def __init__(self, tap_stream_id, pk_fields):
         self.tap_stream_id = tap_stream_id
         self.pk_fields = pk_fields
@@ -71,7 +67,8 @@ class Agents(Stream):
 
 
 class Chats(Stream):
-    replication_key = {'timestamp', 'end_timestamp'}
+    replication_key = {"timestamp", "end_timestamp"}
+
     def _bulk_chats(self, ctx, chat_ids):
         if not chat_ids:
             return []
@@ -79,16 +76,13 @@ class Chats(Stream):
         body = ctx.client.request(self.tap_stream_id, params=params)
         return list(body["docs"].values())
 
-    def _search(self, ctx, chat_type, ts_field,
-                start_dt: datetime, end_dt: datetime):
-        params = {
-            "q": "type:{} AND {}:[{} TO {}]"
-            .format(chat_type, ts_field, start_dt.isoformat(), end_dt.isoformat())
-        }
-        return ctx.client.request(
-            self.tap_stream_id, params=params, url_extra="/search")
+    def _search(self, ctx, chat_type, ts_field, start_dt: datetime, end_dt: datetime):
+        params = {"q": f"type:{chat_type} AND {ts_field}:[{start_dt.isoformat()} TO {end_dt.isoformat()}]"}
+        return ctx.client.request(self.tap_stream_id, params=params, url_extra="/search")
 
-    def _pull(self, ctx, chat_type, ts_field, *, full_sync, schema: Dict, stream_metadata: Dict, transformer: Transformer):
+    def _pull(
+        self, ctx, chat_type, ts_field, *, full_sync, schema: Dict, stream_metadata: Dict, transformer: Transformer
+    ):
         """Pulls and writes pages of data for the given chat_type, where
         chat_type can be either "chat" or "offline_msg".
 
@@ -145,16 +139,34 @@ class Chats(Stream):
                 return True
             next_sync = strptime_to_utc(last_sync) + timedelta(days=int(sync_days))
             if next_sync <= ctx.now:
-                LOGGER.info("Running full sync of chats: "
-                            "last sync was %s, configured to run every %s days",
-                            last_sync, sync_days)
+                LOGGER.info(
+                    "Running full sync of chats: " "last sync was %s, configured to run every %s days",
+                    last_sync,
+                    sync_days,
+                )
                 return True
         return False
 
     def sync(self, ctx, schema: Dict, stream_metadata: Dict, transformer: Transformer):
         full_sync = self._should_run_full_sync(ctx)
-        self._pull(ctx, "chat", "end_timestamp", full_sync=full_sync,schema=schema,stream_metadata=stream_metadata,transformer=transformer)
-        self._pull(ctx, "offline_msg", "timestamp", full_sync=full_sync,schema=schema,stream_metadata=stream_metadata,transformer=transformer)
+        self._pull(
+            ctx,
+            "chat",
+            "end_timestamp",
+            full_sync=full_sync,
+            schema=schema,
+            stream_metadata=stream_metadata,
+            transformer=transformer,
+        )
+        self._pull(
+            ctx,
+            "offline_msg",
+            "timestamp",
+            full_sync=full_sync,
+            schema=schema,
+            stream_metadata=stream_metadata,
+            transformer=transformer,
+        )
         if full_sync:
             ctx.state["chats_last_full_sync"] = ctx.now.isoformat()
             ctx.write_state()
@@ -172,7 +184,7 @@ class Bans(Stream):
                 # TODO: Add Additional advanced property in connection_properties
             }
             response = ctx.client.request(self.tap_stream_id, params)
-            page = response.get("visitor",[]) + response.get("ip_address",[])
+            page = response.get("visitor", []) + response.get("ip_address", [])
             if not page:
                 break
             page = response["visitor"] + response["ip_address"]
@@ -183,6 +195,7 @@ class Bans(Stream):
         ctx.set_bookmark(since_id_offset, None)
         ctx.write_state()
 
+
 class Account(Stream):
     def sync(self, ctx, schema: Dict, stream_metadata: Dict, transformer: Transformer):
         # The account endpoint returns a single item, so we have to wrap it in
@@ -192,17 +205,14 @@ class Account(Stream):
         self.write_page([page])
 
 
-DEPARTMENTS = Everything("departments", ["id"])
-ACCOUNT = Account("account", ["account_key"])
 all_streams = [
     Agents("agents", ["id"]),
     Chats("chats", ["id"]),
     Everything("shortcuts", ["name"]),
     Everything("triggers", ["id"]),
     Bans("bans", ["id"]),
-    DEPARTMENTS,
+    Everything("departments", ["id"]),
     Everything("goals", ["id"]),
-    ACCOUNT,
+    Account("account", ["account_key"]),
 ]
-all_stream_ids = [s.tap_stream_id for s in all_streams]
-STREAMS = {s.tap_stream_id:s for s in all_streams}
+STREAMS = {s.tap_stream_id: s for s in all_streams}

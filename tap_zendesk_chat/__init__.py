@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 import os
+
 import singer
-from singer.utils import parse_args,handle_top_exception
 from singer.catalog import Catalog
+from singer.utils import handle_top_exception, parse_args
+
 from .context import Context
 from .discover import discover
 from .sync import sync
@@ -19,7 +21,7 @@ def main():
         discover(args.config).dump()
     else:
         ctx = Context(args.config, args.state, args.catalog or discover(args.config))
-        sync(ctx,args.catalog or discover(args.config))
+        sync(ctx, args.catalog or discover(args.config))
 
 
 if __name__ == "__main__":
