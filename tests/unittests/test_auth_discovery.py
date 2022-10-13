@@ -33,7 +33,7 @@ def mock_200_account_endpoint_exception(*args, **kwargs):
     return MockResponse({}, 200)
 
 
-class TestBasicAuthInDiscoverMode(unittest.TestCase):
+class TestDiscoverMode(unittest.TestCase):
 
     def test_basic_auth_no_access_401(self):
         '''
@@ -49,26 +49,37 @@ class TestBasicAuthInDiscoverMode(unittest.TestCase):
         self.assertIn(expected_error_message, str(e.exception))
 
     @mock.patch('tap_zendesk_chat.utils', return_value=Args())
-    @mock.patch('tap_zendesk_chat.discover')
-    def test_discovery_calls_on_200_access(self, mock_discover, mock_utils):
+    @mock.patch('singer.catalog.Catalog.from_dict', return_value={"key": "value"})
+    def test_discovery_no_config(self, mock_utils, mock_catalog):
         """
-        tests if discovery method is getting called after mocking required_config_keys
+        tests discovery method when config is None.
         """
-        tap_zendesk_chat.main_impl()
-        self.assertEqual(mock_discover.call_count, 1)
+        expected = {"key": "value"}
+        self.assertEqual(tap_zendesk_chat.discover(None), expected)
+
+    @mock.patch('tap_zendesk_chat.utils', return_value=Args())
+    @mock.patch('singer.catalog.Catalog.from_dict', return_value={"key": "value"})
+    @mock.patch('tap_zendesk_chat.http.Client')
+    @mock.patch('tap_zendesk_chat.http.Client.request')
+    def test_discovery(self, mock_utils, mock_catalog, mock_client, mock_request):
+        """
+        tests discovery method.
+        """
+        expected = {"key": "value"}
+        self.assertEqual(tap_zendesk_chat.discover(Args().config), expected)
 
 
 class TestAccountEndpointAuthorized(unittest.TestCase):
 
-    @mock.patch("requests.Session.send")
-    def test_is_account_endpoint_verified(self, mock_send):
+    def test_is_account_not_authorized_404(self):
         """
-        verify if is_account_endpoint_authorized fn returns True boolean on 200 status code
+        tests if account_not_authorized method in discover raises http 404
         """
-        args = Args()
-        client = Client(args.config)
-        mock_send.return_value = mock_200_account_endpoint_exception()
-        resp = tap_zendesk_chat.is_account_endpoint_authorized(client)
-        self.assertEqual(resp, True)
+        client = Client(Args().config)
+        with self.assertRaises(HTTPError) as e:
+            client.request("xxxxxxx")
+
+        expected_error_message = "404 Client Error: Not Found for url:"
+        self.assertIn(expected_error_message, str(e.exception))
 
 
