@@ -1,7 +1,5 @@
 from tap_zendesk_chat import utils
 import unittest
-import pendulum
-
 
 class BaseMetadata:
     """
@@ -63,7 +61,7 @@ class TestMetadataFunctions(unittest.TestCase):
 
     def test_intervals(self):
         days = 30
-        now = pendulum.parse("2018-02-14T10:30:20")
+        now = utils.strptime_to_utc("2018-02-14T10:30:20")
         broken = utils.break_into_intervals(days, "2018-01-02T18:14:33", now)
         as_strs = [(x.isoformat(), y.isoformat()) for x, y in broken]
         assert as_strs == [
