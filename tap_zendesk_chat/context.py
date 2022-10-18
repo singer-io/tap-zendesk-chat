@@ -1,10 +1,17 @@
 from datetime import datetime
+from typing import Dict, List
+
+from singer import Catalog,write_state
 from singer.utils import now
-import singer
+
 from .http import Client
 
+
 class Context:
-    def __init__(self, config, state, catalog):
+    """
+    Wrapper Class Around state bookmarking
+    """
+    def __init__(self, config :Dict, state :Dict, catalog :Catalog):
         self.config = config
         self.state = state
         self.catalog = catalog
@@ -13,16 +20,22 @@ class Context:
 
     @property
     def bookmarks(self):
+        """
+        Provides read-only access to bookmarks, creates one if does not exist
+        """
         if "bookmarks" not in self.state:
             self.state["bookmarks"] = {}
         return self.state["bookmarks"]
 
-    def bookmark(self, path):
+    def bookmark(self, path :List):
+        """
+        checks the state[file] for a nested path of bookmarks and returns value
+        """
         bookmark = self.bookmarks
-        for p in path:
-            if p not in bookmark:
-                bookmark[p] = {}
-            bookmark = bookmark[p]
+        for key in path:
+            if key not in bookmark:
+                bookmark[key] = {}
+            bookmark = bookmark[key]
         return bookmark
 
     def set_bookmark(self, path, val):
@@ -38,4 +51,4 @@ class Context:
         return val
 
     def write_state(self):
-        singer.write_state(self.state)
+        write_state(self.state)

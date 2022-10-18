@@ -44,8 +44,7 @@ def discover(config: dict) -> Catalog:
     """discover function for tap-zendesk-chat."""
     if config:
         client = Client(config)
-        # perform auth
-        client.request(STREAMS["departments"].tap_stream_id)
+        client.request(STREAMS["chats"].tap_stream_id)
         if account_not_authorized(client):
             STREAMS.pop("account")
     streams = []

@@ -130,7 +130,7 @@ class Chats(Stream):
                 ctx.set_bookmark(ts_bookmark_key, max_bookmark)
                 ctx.write_state()
 
-    def _should_run_full_sync(self, ctx):
+    def _should_run_full_sync(self, ctx) -> bool:
         sync_days = ctx.config.get("chats_full_sync_days")
         if sync_days:
             last_sync = ctx.state.get("chats_last_full_sync")
