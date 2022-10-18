@@ -81,8 +81,7 @@
     "unread": {
       "type": [
         "null",
-        "boolean",
-        "integer"
+        "boolean"
       ]
     },
     "timestamp": {
