@@ -109,26 +109,26 @@ class Chats(Stream):
         LOGGER.info("Using chat_search_interval_days: %s", interval_days)
 
         intervals = break_into_intervals(interval_days, start_time, ctx.now)
-        with Transformer() as transformer:
-            for start_dt, end_dt in intervals:
-                while True:
-                    if next_url:
-                        search_resp = ctx.client.request(self.tap_stream_id, url=next_url)
-                    else:
-                        search_resp = self._search(ctx, chat_type, ts_field, start_dt, end_dt)
-                    next_url = search_resp["next_url"]
-                    ctx.set_bookmark(url_offset_key, next_url)
-                    ctx.write_state()
-                    chat_ids = [r["id"] for r in search_resp["results"]]
-                    chats = self._bulk_chats(ctx, chat_ids)
-                    if chats:
-                        chats = [transformer.transform(rec, schema, metadata=stream_metadata) for rec in chats]
-                        self.write_page(chats)
-                        max_bookmark = max(max_bookmark, *[c[ts_field] for c in chats])
-                    if not next_url:
-                        break
-                ctx.set_bookmark(ts_bookmark_key, max_bookmark)
+
+        for start_dt, end_dt in intervals:
+            while True:
+                if next_url:
+                    search_resp = ctx.client.request(self.tap_stream_id, url=next_url)
+                else:
+                    search_resp = self._search(ctx, chat_type, ts_field, start_dt, end_dt)
+                next_url = search_resp["next_url"]
+                ctx.set_bookmark(url_offset_key, next_url)
                 ctx.write_state()
+                chat_ids = [r["id"] for r in search_resp["results"]]
+                chats = self._bulk_chats(ctx, chat_ids)
+                if chats:
+                    chats = [transformer.transform(rec, schema, metadata=stream_metadata) for rec in chats]
+                    self.write_page(chats)
+                    max_bookmark = max(max_bookmark, *[c[ts_field] for c in chats])
+                if not next_url:
+                    break
+            ctx.set_bookmark(ts_bookmark_key, max_bookmark)
+            ctx.write_state()
 
     def _should_run_full_sync(self, ctx) -> bool:
         sync_days = ctx.config.get("chats_full_sync_days")
@@ -140,7 +140,7 @@ class Chats(Stream):
             next_sync = strptime_to_utc(last_sync) + timedelta(days=int(sync_days))
             if next_sync <= ctx.now:
                 LOGGER.info(
-                    "Running full sync of chats: " "last sync was %s, configured to run every %s days",
+                    "Running full sync of chats: last sync was %s, configured to run every %s days",
                     last_sync,
                     sync_days,
                 )

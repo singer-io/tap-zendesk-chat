@@ -1,6 +1,5 @@
-import tap_zendesk_chat
+from tap_zendesk_chat import utils
 import unittest
-
 
 class BaseMetadata:
     """
@@ -49,27 +48,24 @@ class TestMetadataFunctions(unittest.TestCase):
     POSITIVE_TEST_STREAMS = [Account, Departments]
     NEGATIVE_TEST_STREAM = [Bans]
 
-    def test_is_selected(self):
-        """
-        tests is_selected fn in tap_zendesk_chat/__init__.py file
-        checks if selected field is set as true in metadata
-        """
-        for stream in self.POSITIVE_TEST_STREAMS:
-            self.assertEqual(True, tap_zendesk_chat.is_selected(stream))
-
-        for stream in self.NEGATIVE_TEST_STREAM:
-            self.assertEqual(False, tap_zendesk_chat.is_selected(stream))
-
     def test_load_schema(self):
         """
          tests load_schema fn in tap_zendesk_chat/__init__.py file
          checks if length of properties attr equals with size of properties in loaded schema using load_schema fn
         """
         for stream in self.POSITIVE_TEST_STREAMS:
-            self.assertEquals(len(stream.properties), len(tap_zendesk_chat.load_schema(stream.stream)['properties']))
+            self.assertEquals(len(stream.properties), len(utils.load_schema(stream.stream)['properties']))
 
         for stream in self.NEGATIVE_TEST_STREAM:
-            self.assertNotEqual(len(stream.properties), len(tap_zendesk_chat.load_schema(stream.stream)['properties']))
+            self.assertNotEqual(len(stream.properties), len(utils.load_schema(stream.stream)['properties']))
 
-
+    def test_intervals(self):
+        days = 30
+        now = utils.strptime_to_utc("2018-02-14T10:30:20")
+        broken = utils.break_into_intervals(days, "2018-01-02T18:14:33", now)
+        as_strs = [(x.isoformat(), y.isoformat()) for x, y in broken]
+        assert as_strs == [
+            ("2018-01-02T18:14:33+00:00", "2018-02-01T18:14:33+00:00"),
+            ("2018-02-01T18:14:33+00:00", "2018-02-14T10:30:20+00:00"),
+        ]
 

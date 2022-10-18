@@ -1,9 +1,8 @@
 import singer
 from requests.exceptions import HTTPError
 from singer import metadata
-from singer.catalog import Catalog, CatalogEntry, Schema
+from singer.catalog import Catalog
 
-from . import streams as streams_
 from .http import Client
 from .streams import STREAMS
 from .utils import load_schema
