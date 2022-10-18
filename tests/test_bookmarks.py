@@ -179,7 +179,7 @@ class BookmarksTest(BaseTapTest):
                     # Verify the number of records in the second sync is the same as the first
                     self.assertEqual(second_sync_count, first_sync_count)
 
-                    if stream == 'agents':
+                    if stream in ('agents', 'bans'):
                         self.assertEqual(first_bookmark_key_value, second_bookmark_key_value, {'offset': {'id': None}})
                     else:
                         # Verify the syncs do not set a bookmark for full table streams
