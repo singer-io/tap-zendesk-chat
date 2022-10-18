@@ -31,7 +31,12 @@ jobs:
           name: 'Unit Tests'
           command: |
             source /usr/local/share/virtualenvs/tap-zendesk-chat/bin/activate
-            nosetests tests/unittests
+            pip install coverage
+            nosetests --with-coverage --cover-erase --cover-package=tap_zendesk_chat --cover-html-dir=htmlcov tests/unittests
+      - store_test_results:
+          path: test_output/report.xml
+      - store_artifacts:
+          path: htmlcov
       - run:
           name: 'Integration Tests'
           command: |
