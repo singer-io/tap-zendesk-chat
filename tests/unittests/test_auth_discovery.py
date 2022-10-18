@@ -59,9 +59,8 @@ class TestDiscoverMode(unittest.TestCase):
 
     @mock.patch('tap_zendesk_chat.utils', return_value=Args())
     @mock.patch('singer.catalog.Catalog.from_dict', return_value={"key": "value"})
-    @mock.patch('tap_zendesk_chat.http.Client')
     @mock.patch('tap_zendesk_chat.http.Client.request')
-    def test_discovery(self, mock_utils, mock_catalog, mock_client, mock_request):
+    def test_discovery(self, mock_utils, mock_catalog, mock_request):
         """
         tests discovery method.
         """
