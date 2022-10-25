@@ -3,10 +3,11 @@ Test that with no fields selected for a stream automatic fields are still replic
 """
 from tap_tester import runner, connections
 
-from base import DynamicsBaseTest
+from base import BaseTapTest
 
 
-class DynamicsAutomaticFields(DynamicsBaseTest):
+
+class DynamicsAutomaticFields(BaseTapTest):
     """Test that with no fields selected for a stream automatic fields are still replicated"""
 
     @staticmethod
