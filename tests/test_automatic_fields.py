@@ -34,12 +34,10 @@ class DynamicsAutomaticFields(BaseTapTest):
         found_catalogs = self.run_and_verify_check_mode(conn_id)
 
         # table and field selection
-        test_catalogs_automatic_fields = [catalog for catalog in found_catalogs
+        catalog_entries = [catalog for catalog in found_catalogs
                                           if catalog.get('stream_name') in expected_streams]
 
-        self.perform_and_verify_table_and_field_selection(
-            conn_id, test_catalogs_automatic_fields, select_all_fields=False,
-        )
+        self.perform_and_verify_table_and_field_selection(conn_id, catalog_entries, expected_streams, select_all_fields=True)
 
         # run initial sync
         record_count_by_stream = self.run_and_verify_sync(conn_id)
