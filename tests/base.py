@@ -310,10 +310,11 @@ class BaseTapTest(unittest.TestCase):
         selected_fields = set()
         for field in metadata:
             is_field_metadata = len(field['breadcrumb']) > 1
-            inclusion_automatic_or_selected = (field['metadata']['inclusion'] == 'automatic'
-                                               or field['metadata']['selected'] is True)
-            if is_field_metadata and inclusion_automatic_or_selected:
-                selected_fields.add(field['breadcrumb'][1])
+            if is_field_metadata:
+                inclusion_automatic_or_selected = (field['metadata']['inclusion'] == 'automatic'
+                                                or field['metadata']['selected'] is True)
+                if inclusion_automatic_or_selected:
+                    selected_fields.add(field['breadcrumb'][1])
         return selected_fields
 
 
