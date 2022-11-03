@@ -27,6 +27,7 @@ class BookmarksTest(BaseTapTest):
         return_value = {
             "start_date": "2017-08-15T00:00:00Z",
             "agents_page_limit": 1,
+            "chat_search_interval_days": 2
         }
         if original:
             return return_value
