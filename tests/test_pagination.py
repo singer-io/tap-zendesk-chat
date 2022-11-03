@@ -1,23 +1,26 @@
 """Test that with no fields selected for a stream automatic fields are still
 replicated."""
 import copy
+from math import ceil
 
 from base import BaseTapTest
 from tap_tester import connections, menagerie, runner
 from tap_tester.logger import LOGGER
-from math import ceil
+
 
 class TestPagination(BaseTapTest):
     """Test that all fields selected for a stream are replicated."""
+
     AGENTS_PAGE_SIZE = 1
     BANS_PAGE_SIZE = 100
+
     def get_properties(self, original: bool = True):
         """Configuration properties required for the tap."""
         return_value = {
             "start_date": "2021-10-10T00:00:00Z",
             "agents_page_limit": self.AGENTS_PAGE_SIZE,
             # "bans_page_limit":self.BANS_PAGE_SIZE
-            }
+        }
         if original:
             return return_value
 
@@ -32,7 +35,7 @@ class TestPagination(BaseTapTest):
     def test_run(self):
         """Verify the use of `currently_syncing` bookmark in case of a sync
         that was terminted/interrupted."""
-        page_size = int(self.get_properties().get('agents_page_limit', 10))
+        page_size = int(self.get_properties().get("agents_page_limit", 10))
         expected_streams = {"bans", "agents"}
         # only "bans" and "agents" stream support pagination
         # instantiate connection
@@ -51,17 +54,16 @@ class TestPagination(BaseTapTest):
 
         for stream in expected_streams:
             with self.subTest(stream=stream):
-                page_size =  self.BANS_PAGE_SIZE if stream == "bans" else self.AGENTS_PAGE_SIZE
+                page_size = self.BANS_PAGE_SIZE if stream == "bans" else self.AGENTS_PAGE_SIZE
                 # expected values
                 expected_primary_keys = self.expected_primary_keys()
                 # collect information for assertions from syncs 1 & 2 base on expected values
                 primary_keys_list = [
-                    tuple(message.get('data').get(expected_pk)
-                        for expected_pk in expected_primary_keys[stream])
-                            for message in synced_records.get(stream).get('messages')
-                                if message.get('action') == 'upsert'
-                                ]
-                LOGGER.info("stream: %s pk_list %s",stream,primary_keys_list)
+                    tuple(message.get("data").get(expected_pk) for expected_pk in expected_primary_keys[stream])
+                    for message in synced_records.get(stream).get("messages")
+                    if message.get("action") == "upsert"
+                ]
+                LOGGER.info("stream: %s pk_list %s", stream, primary_keys_list)
                 # verify records are more than page size so multiple page is working
                 # Chunk the replicated records (just primary keys) into expected pages
                 pages = []
@@ -70,8 +72,8 @@ class TestPagination(BaseTapTest):
                     page_start = page_index * page_size
                     page_end = (page_index + 1) * page_size
                     pages.append(set(primary_keys_list[page_start:page_end]))
-                
-                LOGGER.info("items: %s page_count %s",len(primary_keys_list),page_count)
+
+                LOGGER.info("items: %s page_count %s", len(primary_keys_list), page_count)
 
                 # Verify by primary keys that data is unique for each page
                 for current_index, current_page in enumerate(pages):
@@ -79,5 +81,6 @@ class TestPagination(BaseTapTest):
                         for other_index, other_page in enumerate(pages):
                             if current_index == other_index:
                                 continue  # don't compare the page to itself
-                            self.assertTrue(current_page.isdisjoint(other_page), msg=f'other_page_primary_keys={other_page}')
-
+                            self.assertTrue(
+                                current_page.isdisjoint(other_page), msg=f"other_page_primary_keys={other_page}"
+                            )

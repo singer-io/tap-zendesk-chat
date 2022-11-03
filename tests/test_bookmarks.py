@@ -5,11 +5,12 @@ STREAMS_WITH_BOOKMARKS = ["agents", "chats"]
 
 
 class BookmarksTest(BaseTapTest):
+    """A Parametrized Bookmarks Test."""
 
     expected_record_count = {
         "agents": 3,
-        "chats": 223,
-        "bans": 22,
+        "chats": 1875,
+        "bans": 23,
         "account": 1,
         "shortcuts": 4,
         "triggers": 12,
@@ -40,7 +41,6 @@ class BookmarksTest(BaseTapTest):
         # Testing against ads insights objects
         self.start_date = self.get_properties()["start_date"]
 
-        """A Parametrized Bookmarks Test"""
         expected_replication_keys = self.expected_replication_keys()
         expected_replication_methods = self.expected_replication_method()
 
