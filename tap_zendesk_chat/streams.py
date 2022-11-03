@@ -180,7 +180,7 @@ class Bans(Stream):
 
             params = {
                 "since_id": since_id,
-                "limit": ctx.config.get("agents_page_limit", 100),
+                "limit": ctx.config.get("bans_page_limit", 100),
                 # TODO: Add Additional advanced property in connection_properties
             }
             response = ctx.client.request(self.tap_stream_id, params)
@@ -206,13 +206,13 @@ class Account(Stream):
 
 
 all_streams = [
+    Account("account", ["account_key"]),
     Agents("agents", ["id"]),
-    Chats("chats", ["id"]),
-    Everything("shortcuts", ["name"]),
-    Everything("triggers", ["id"]),
     Bans("bans", ["id"]),
+    Chats("chats", ["id"]),
     Everything("departments", ["id"]),
     Everything("goals", ["id"]),
-    Account("account", ["account_key"]),
+    Everything("shortcuts", ["name"]),
+    Everything("triggers", ["id"]),
 ]
 STREAMS = {s.tap_stream_id: s for s in all_streams}

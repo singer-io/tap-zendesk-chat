@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import os
+
 import singer
 from singer.utils import handle_top_exception, parse_args
 
