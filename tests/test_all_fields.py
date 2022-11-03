@@ -14,7 +14,7 @@ class DynamicsAutomaticFields(BaseTapTest):
     def test_run(self):
         """When all fields are selected all fields are replicated."""
 
-        expected_streams = self.expected_streams() - {"chats"}
+        expected_streams = self.expected_streams()
         # temp removed chats as data isn't available for this stream, unable to create test-data using helper script
 
         # instantiate connection

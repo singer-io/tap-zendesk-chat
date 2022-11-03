@@ -10,15 +10,25 @@ from tap_tester.logger import LOGGER
 class TestInteruptibleSync(BaseTapTest):
     """Test that all fields selected for a stream are replicated."""
 
+    def get_properties(self, original: bool = True):
+        """Configuration properties required for the tap."""
+        return_value = {"start_date": "2022-10-10T00:00:00Z", "chat_search_interval_days": 1}
+        if original:
+            return return_value
+
+        return_value["start_date"] = self.start_date
+
+        return return_value
+
     @staticmethod
     def name():
         return "tap_tester_test_interrupted_sync"
 
     def test_run(self):
-        """Verify the use of `currently_syncing` bookmark incase of a sync that
-        was terminted/interrupted."""
+        """Verify the use of `currently_syncing` bookmark in case of a sync
+        that was terminted/interrupted."""
         start_date = self.get_properties()["start_date"]
-        expected_streams = self.expected_streams() - {"chats"}
+        expected_streams = self.expected_streams()
         expected_replication_keys = self.expected_replication_keys()
         expected_replication_methods = self.expected_replication_method()
 
@@ -36,8 +46,10 @@ class TestInteruptibleSync(BaseTapTest):
         # Run a first sync job using orchestrator
         first_sync_record_count = self.run_and_verify_sync(conn_id)
         first_sync_bookmarks = menagerie.get_state(conn_id)
-
-        completed_streams = {"account", "agents", "bans", "departments"}
+        LOGGER.info(
+            f"first_sync_record_count = {first_sync_record_count} \n first_sync_bookmarks = {first_sync_bookmarks}"
+        )
+        completed_streams = {"account", "agents", "bans", "chats", "departments"}
         pending_streams = {"shortcuts", "triggers"}
         interrupt_stream = "goals"
         interrupted_sync_states = self.create_interrupt_sync_state(

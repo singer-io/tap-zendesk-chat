@@ -22,7 +22,7 @@ class DynamicsAutomaticFields(BaseTapTest):
         posted for that stream.
         """
 
-        expected_streams = self.expected_streams() - {"chats"}
+        expected_streams = self.expected_streams()
         # removed chats as data isn't available for this stream, unable to create test-data using helper script
 
         # instantiate connection
@@ -59,6 +59,8 @@ class DynamicsAutomaticFields(BaseTapTest):
                     msg="The number of records is not over the stream max limit",
                 )
 
+                if stream == "chats":
+                    expected_keys.remove("end_timestamp")
                 # Verify that only the automatic fields are sent to the target
                 for actual_keys in record_messages_keys:
                     self.assertSetEqual(expected_keys, actual_keys)

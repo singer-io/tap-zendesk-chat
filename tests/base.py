@@ -106,7 +106,7 @@ class BaseTapTest(unittest.TestCase):
         }
 
     def expected_replication_method(self):
-        """return a dictionary with key of table name nd value of replication
+        """return a dictionary with key of table name and value of replication
         method."""
         return {
             table: properties.get(self.REPLICATION_METHOD, None)
@@ -351,7 +351,7 @@ class BaseTapTest(unittest.TestCase):
         """Perform table and field selection based off of the streams to select
         set and field selection parameters.
 
-        Verfify this results in the expected streams selected and all or
+        Verify this results in the expected streams selected and all or
         no fields selected for those streams.
         """
         # Select all available fields or select no fields from all testable streams

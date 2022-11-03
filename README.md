@@ -37,8 +37,8 @@ authorization request), log into your Zendesk Chat / Zopim account, go to
     Settings -> Account -> API -> Add API Client
 
 Once you create the API Client you will receive a client ID and client secret.
-Use these in conjunction with your chose method of performing the OAuth 2
-reqeust to obtain an access token to your (or a third-party) Zendesk Chat /
+Use these in conjunction with your choice method of performing the OAuth 2
+request to obtain an access token to your (or a third-party) Zendesk Chat /
 Zopim account.
 
 3. Create the Config File
