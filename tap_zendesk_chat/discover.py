@@ -31,6 +31,7 @@ def build_metadata(raw_schema: dict, stream):
     mdata = metadata.new()
     metadata.write(mdata, (), "valid-replication-keys", list(stream.replication_key))
     metadata.write(mdata, (), "table-key-properties", list(stream.pk_fields))
+    metadata.write(mdata, (), "forced-replication-method", stream.forced_replication_method)
     for prop in raw_schema["properties"].keys():
         if prop in stream.replication_key or prop in stream.pk_fields:
             metadata.write(mdata, ("properties", prop), "inclusion", "automatic")

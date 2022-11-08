@@ -20,6 +20,7 @@ class Stream:
     """
 
     replication_key = set()
+    forced_replication_method = "FULL_TABLE"
 
     def __init__(self, tap_stream_id, pk_fields):
         self.tap_stream_id = tap_stream_id
@@ -68,6 +69,7 @@ class Agents(Stream):
 
 class Chats(Stream):
     replication_key = {"timestamp", "end_timestamp"}
+    forced_replication_method = "INCREMENTAL"
 
     def _bulk_chats(self, ctx, chat_ids):
         if not chat_ids:
