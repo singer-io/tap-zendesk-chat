@@ -97,10 +97,12 @@ class BaseTapTest(unittest.TestCase):
         }
 
     def expected_automatic_fields(self):
-        return {
+        data = {
             table: self.expected_primary_keys().get(table) | self.expected_replication_keys().get(table)
             for table in self.expected_metadata()
         }
+        data["chats"].update({"type"})
+        return data
 
     def expected_replication_method(self):
         """return a dictionary with key of table name and value of replication
