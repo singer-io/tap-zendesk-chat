@@ -5,27 +5,22 @@ from base import BaseTapTest
 from tap_tester import connections, menagerie
 
 
-class DiscoveryTest(BaseTapTest):
-    """Test the tap discovery."""
-
+class TestZendeskChatDiscovery(BaseTapTest):
     @staticmethod
     def name():
-        return "tap_tester_tap_zendesk_chat_discovery_test"
+        return "tap_tester_tap_zendesk_chat_discovery"
 
     def test_run(self):
-        """Verify that discover creates the appropriate catalog, schema,
-        metadata, etc.
+        """
+        Testing that discovery creates the appropriate catalog with valid metadata.
 
-        • Verify number of actual streams discovered match expected •
-        Verify the stream names discovered were what we expect • Verify
-        stream names follow naming convention   streams should only have
-        lowercase alphas and underscores • verify there is only 1 top
-        level breadcrumb • verify replication key(s) • verify primary
-        key(s) • verify the actual replication matches our expected
-        replication method • verify that primary, replication and
-        foreign keys   are given the inclusion of automatic (metadata
-        and annotated schema). • verify that all other fields have
-        inclusion of available (metadata and schema)
+        - Verify number of actual streams discovered match expected
+        - Verify the stream names discovered were what we expect
+        - Verify stream names follow naming convention streams should only have lowercase alphas and underscores
+        - verify there is only 1 top level breadcrumb
+        - verify primary key(s)
+        - verify that primary keys are given the inclusion of automatic.
+        - verify that all other fields have inclusion of available metadata.
         """
         conn_id = connections.ensure_connection(self)
 

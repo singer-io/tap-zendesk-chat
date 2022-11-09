@@ -4,37 +4,26 @@ import copy
 from math import ceil
 
 from base import BaseTapTest
-from tap_tester import connections, menagerie, runner
+from tap_tester import connections, runner
 from tap_tester.logger import LOGGER
 
 
-class TestPagination(BaseTapTest):
-    """Test that all fields selected for a stream are replicated."""
+class TestZendeskChatPagination(BaseTapTest):
 
-    AGENTS_PAGE_SIZE = 1
-    BANS_PAGE_SIZE = 100
 
-    def get_properties(self, original: bool = True):
-        """Configuration properties required for the tap."""
-        return_value = {
-            "start_date": "2021-10-10T00:00:00Z",
-            "agents_page_limit": self.AGENTS_PAGE_SIZE,
-            # "bans_page_limit":self.BANS_PAGE_SIZE
-        }
-        if original:
-            return return_value
-
-        return_value["start_date"] = self.start_date
-
-        return return_value
 
     @staticmethod
     def name():
-        return "tap_tester_test_pagination"
+        return "tap_tester_zendesk_chat_pagination"
 
     def test_run(self):
-        """Verify the use of `currently_syncing` bookmark in case of a sync
-        that was terminted/interrupted."""
+        """
+        - Verify that for each stream you can get multiple pages of data.  
+        
+        This requires we ensure more than 1 page of data exists at all times for any given stream.
+        - Verify by pks that the data replicated matches the data we expect.
+        """
+
         page_size = int(self.get_properties().get("agents_page_limit", 10))
         expected_streams = {"bans", "agents"}
         # only "bans" and "agents" stream support pagination
@@ -84,3 +73,22 @@ class TestPagination(BaseTapTest):
                             self.assertTrue(
                                 current_page.isdisjoint(other_page), msg=f"other_page_primary_keys={other_page}"
                             )
+
+
+
+    def get_properties(self, original: bool = True):
+        """Configuration properties required for the tap."""
+        return_value = {
+            "start_date": "2021-10-10T00:00:00Z",
+            "agents_page_limit": self.AGENTS_PAGE_SIZE,
+            # "bans_page_limit":self.BANS_PAGE_SIZE
+        }
+        if original:
+            return return_value
+
+        return_value["start_date"] = self.start_date
+
+        return return_value
+
+    AGENTS_PAGE_SIZE = 1
+    BANS_PAGE_SIZE = 100

@@ -11,9 +11,6 @@ from tap_tester import connections, menagerie, runner
 
 
 class BaseTapTest(unittest.TestCase):
-    """Setup expectations for test sub classes Run discovery for as a
-    prerequisite for most tests."""
-
     REPLICATION_KEYS = "valid-replication-keys"
     PRIMARY_KEYS = "table-key-properties"
     REPLICATION_METHOD = "forced-replication-method"

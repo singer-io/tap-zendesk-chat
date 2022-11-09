@@ -11,29 +11,14 @@ from tap_tester import menagerie, runner
 class StartDateTest(BaseTapTest):
     """Test that the start_date configuration is respected.
 
-    • verify that a sync with a later start date has at least one record
-    synced   and less records than the 1st sync with a previous start
-    date • verify that each stream has less records than the earlier
-    start date sync • verify all data from later start data has bookmark
-    values >= start_date • verify that the minimum bookmark sent to the
-    target for the later start_date sync   is greater than or equal to
-    the start date
+    - verify that a sync with a later start date has at least one record
+      synced and less records than the 1st sync with a previous start date 
+    - verify that each stream has less records than the earlier
+      start date sync 
+    - verify all data from later start data has bookmark values >= start_date 
+    - verify that the minimum bookmark sent to the target for the later 
+      start_date sync is >= start date
     """
-
-    def get_properties(self, original: bool = True):
-        return_value = {
-            "start_date": "2021-04-01T00:00:00Z",
-        }
-
-        if original:
-            return return_value
-
-        return_value["start_date"] = "2021-05-06T00:00:00Z"
-        return return_value
-
-    @staticmethod
-    def get_credentials(original_credentials: bool = True):
-        return {"access_token": os.getenv("TAP_ZENDESK_CHAT_ACCESS_TOKEN")}
 
     @staticmethod
     def name():
@@ -119,3 +104,15 @@ class StartDateTest(BaseTapTest):
 
                     except (OverflowError, ValueError, TypeError):
                         print("bookmarks cannot be converted to dates, " "can't test start_date for {}".format(stream))
+
+    
+    def get_properties(self, original: bool = True):
+        return_value = {
+            "start_date": "2021-04-01T00:00:00Z",
+        }
+
+        if original:
+            return return_value
+
+        return_value["start_date"] = "2021-05-06T00:00:00Z"
+        return return_value

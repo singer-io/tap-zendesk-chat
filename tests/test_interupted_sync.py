@@ -7,26 +7,20 @@ from tap_tester import connections, menagerie, runner
 from tap_tester.logger import LOGGER
 
 
-class TestInteruptibleSync(BaseTapTest):
-    """Test that all fields selected for a stream are replicated."""
-
-    def get_properties(self, original: bool = True):
-        """Configuration properties required for the tap."""
-        return_value = {"start_date": "2022-10-10T00:00:00Z", "chat_search_interval_days": 1}
-        if original:
-            return return_value
-
-        return_value["start_date"] = self.start_date
-
-        return return_value
+class TestZendeskChatDiscoveryInteruptibleSync(BaseTapTest):
+    """Test tap's ability to recover from an interrupted sync"""
 
     @staticmethod
     def name():
-        return "tap_tester_test_interrupted_sync"
+        return "tap_tester_zendesk_chat_interrupted_sync"
 
     def test_run(self):
-        """Verify the use of `currently_syncing` bookmark in case of a sync
-        that was terminted/interrupted."""
+        """
+        Testing that if a sync job is interrupted and state is saved with `currently_syncing`(stream) 
+        the next sync job kicks off and the tap picks back up on that `currently_syncing` stream
+        - Verify behavior is consistent when an added stream is selected between initial and resuming sync
+        """
+
         start_date = self.get_properties()["start_date"]
         expected_streams = self.expected_streams()
         expected_replication_keys = self.expected_replication_keys()
@@ -106,7 +100,7 @@ class TestInteruptibleSync(BaseTapTest):
                             ),
                         )
                     elif stream in pending_streams:
-                        # First sync and second sync record count match
+                    # First sync and second sync record count match
                         self.assertGreaterEqual(
                             second_sync_count,
                             first_sync_count,
@@ -122,3 +116,14 @@ class TestInteruptibleSync(BaseTapTest):
                             stream, expected_replication_method
                         )
                     )
+
+
+    def get_properties(self, original: bool = True):
+        """Configuration properties required for the tap."""
+        return_value = {"start_date": "2022-10-10T00:00:00Z", "chat_search_interval_days": 1}
+        if original:
+            return return_value
+
+        return_value["start_date"] = self.start_date
+
+        return return_value
