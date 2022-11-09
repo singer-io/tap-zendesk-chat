@@ -70,6 +70,7 @@ class TestZendeskChatAllFields(BaseTapTest):
         },
         "shortcuts": {
             "departments",
+            "agents",
         },
     }
 
@@ -77,8 +78,8 @@ class TestZendeskChatAllFields(BaseTapTest):
         """Configuration properties required for the tap."""
 
         return_value = {
-            "start_date": "2017-08-15T00:00:00Z",
-            "chat_search_interval_days": 200,
+            "start_date": "2017-01-15T00:00:00Z",
+            "chat_search_interval_days": 500,
         }
 
         if original:

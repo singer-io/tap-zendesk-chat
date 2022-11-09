@@ -197,7 +197,10 @@ class TestZendeskChatBookmarks(BaseTapTest):
 
     def get_properties(self, original: bool = True):
         """Configuration properties required for the tap."""
-        return_value = {"start_date": "2017-08-15T00:00:00Z", "agents_page_limit": 1, "chat_search_interval_days": 2}
+        return_value = {
+            "start_date": "2017-01-15T00:00:00Z",
+            "agents_page_limit": 1,
+            "chat_search_interval_days": 2}
         if original:
             return return_value
 

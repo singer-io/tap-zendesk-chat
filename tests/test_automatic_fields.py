@@ -54,7 +54,6 @@ class TestZendeskChatAutomaticFields(BaseTapTest):
                         if record.get("type", "") == "chat":
                             self.assertSetEqual(expected_keys, actual_keys)
                         else:
-                            LOGGER.info("%s", record)
                             self.assertSetEqual(expected_keys_offline_msgs, actual_keys)
                 else:
                     for actual_keys in record_messages_keys:
@@ -64,7 +63,7 @@ class TestZendeskChatAutomaticFields(BaseTapTest):
         """Configuration properties required for the tap."""
 
         return_value = {
-            "start_date": "2017-08-15T00:00:00Z",
+            "start_date": "2017-01-15T00:00:00Z",
             "chat_search_interval_days": 500,
         }
 

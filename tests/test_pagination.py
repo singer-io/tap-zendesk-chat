@@ -75,7 +75,6 @@ class TestZendeskChatPagination(BaseTapTest):
         return_value = {
             "start_date": "2021-10-10T00:00:00Z",
             "agents_page_limit": self.AGENTS_PAGE_SIZE,
-            # "bans_page_limit":self.BANS_PAGE_SIZE
         }
         if original:
             return return_value
