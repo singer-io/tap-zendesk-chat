@@ -6,7 +6,8 @@ from tap_tester.logger import LOGGER
 
 
 class TestZendeskChatAutomaticFields(BaseTapTest):
-    """Test that with no fields selected for a stream automatic fields are still replicated"""
+    """Test that with no fields selected for a stream automatic fields are
+    still replicated."""
 
     @staticmethod
     def name():
@@ -24,7 +25,9 @@ class TestZendeskChatAutomaticFields(BaseTapTest):
         conn_id = connections.ensure_connection(self)
         found_catalogs = self.run_and_verify_check_mode(conn_id)
         catalog_entries = [catalog for catalog in found_catalogs if catalog.get("stream_name") in expected_streams]
-        self.perform_and_verify_table_and_field_selection(conn_id, catalog_entries, expected_streams, select_all_fields=False)
+        self.perform_and_verify_table_and_field_selection(
+            conn_id, catalog_entries, expected_streams, select_all_fields=False
+        )
 
         # run initial sync
         record_count_by_stream = self.run_and_verify_sync(conn_id)
@@ -35,10 +38,12 @@ class TestZendeskChatAutomaticFields(BaseTapTest):
 
                 expected_keys = self.expected_automatic_fields().get(stream)
 
-                data = synced_records.get(stream,{})
+                data = synced_records.get(stream, {})
                 record_messages_keys = [set(row["data"].keys()) for row in data["messages"]]
 
-                self.assertGreater(record_count_by_stream.get(stream, -1),0,
+                self.assertGreater(
+                    record_count_by_stream.get(stream, -1),
+                    0,
                     msg="The number of records is not over the stream max limit",
                 )
                 if stream == "chats":
@@ -46,15 +51,14 @@ class TestZendeskChatAutomaticFields(BaseTapTest):
                     for row in data["messages"]:
                         record = row["data"]
                         actual_keys = set(record.keys())
-                        if record.get("type","") == "chat":
-                            self.assertSetEqual(expected_keys,actual_keys)
+                        if record.get("type", "") == "chat":
+                            self.assertSetEqual(expected_keys, actual_keys)
                         else:
-                            LOGGER.info("%s",record)
+                            LOGGER.info("%s", record)
                             self.assertSetEqual(expected_keys_offline_msgs, actual_keys)
                 else:
                     for actual_keys in record_messages_keys:
                         self.assertSetEqual(expected_keys, actual_keys)
-
 
     def get_properties(self, original: bool = True):
         """Configuration properties required for the tap."""
@@ -62,7 +66,7 @@ class TestZendeskChatAutomaticFields(BaseTapTest):
         return_value = {
             "start_date": "2017-08-15T00:00:00Z",
             "chat_search_interval_days": 500,
-            }
+        }
 
         if original:
             return return_value

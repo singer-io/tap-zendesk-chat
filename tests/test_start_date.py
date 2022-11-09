@@ -1,22 +1,22 @@
 """Test that the start_date configuration is respected."""
 
-import os
 from functools import reduce
 
 from base import BaseTapTest
 from dateutil.parser import parse
 from tap_tester import menagerie, runner
+from tap_tester.logger import LOGGER
 
 
 class StartDateTest(BaseTapTest):
     """Test that the start_date configuration is respected.
 
     - verify that a sync with a later start date has at least one record
-      synced and less records than the 1st sync with a previous start date 
+      synced and less records than the 1st sync with a previous start date
     - verify that each stream has less records than the earlier
-      start date sync 
-    - verify all data from later start data has bookmark values >= start_date 
-    - verify that the minimum bookmark sent to the target for the later 
+      start date sync
+    - verify all data from later start data has bookmark values >= start_date
+    - verify that the minimum bookmark sent to the target for the later
       start_date sync is >= start date
     """
 
@@ -103,9 +103,8 @@ class StartDateTest(BaseTapTest):
                         self.assertGreaterEqual(target_value, self.local_to_utc(parse(self.start_date)))
 
                     except (OverflowError, ValueError, TypeError):
-                        print("bookmarks cannot be converted to dates, " "can't test start_date for {}".format(stream))
+                        LOGGER.info("bookmarks cannot be converted to dates, " "can't test start_date for %s", stream)
 
-    
     def get_properties(self, original: bool = True):
         return_value = {
             "start_date": "2021-04-01T00:00:00Z",

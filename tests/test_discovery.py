@@ -11,8 +11,8 @@ class TestZendeskChatDiscovery(BaseTapTest):
         return "tap_tester_tap_zendesk_chat_discovery"
 
     def test_run(self):
-        """
-        Testing that discovery creates the appropriate catalog with valid metadata.
+        """Testing that discovery creates the appropriate catalog with valid
+        metadata.
 
         - Verify number of actual streams discovered match expected
         - Verify the stream names discovered were what we expect

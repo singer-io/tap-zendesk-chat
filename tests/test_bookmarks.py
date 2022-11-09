@@ -5,7 +5,8 @@ STREAMS_WITH_BOOKMARKS = ["agents", "chats"]
 
 
 class TestZendeskChatBookmarks(BaseTapTest):
-    """Test tap sets a bookmark and respects it for the next sync of a stream"""
+    """Test tap sets a bookmark and respects it for the next sync of a
+    stream."""
 
     expected_record_count = {
         "agents": 3,
@@ -30,7 +31,7 @@ class TestZendeskChatBookmarks(BaseTapTest):
             All data of the second sync is >= the bookmark from the first sync
             The number of records in the 2nd sync is less then the first
         - Verify that for full table stream, all data replicated in sync 1 is replicated again in sync 2.
-        
+
         PREREQUISITE
         For EACH stream that is incrementally replicated there are multiple rows of data with
             different values for the replication key
@@ -194,14 +195,9 @@ class TestZendeskChatBookmarks(BaseTapTest):
                 # Verify at least 1 record was replicated in the second sync
                 self.assertGreater(second_sync_count, 0, msg=f"We are not fully testing bookmarking for {stream}")
 
-
     def get_properties(self, original: bool = True):
         """Configuration properties required for the tap."""
-        return_value = {
-            "start_date": "2017-08-15T00:00:00Z",
-            "agents_page_limit": 1,
-            "chat_search_interval_days": 2
-        }
+        return_value = {"start_date": "2017-08-15T00:00:00Z", "agents_page_limit": 1, "chat_search_interval_days": 2}
         if original:
             return return_value
 

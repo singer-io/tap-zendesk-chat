@@ -1,6 +1,5 @@
 """Test that with no fields selected for a stream automatic fields are still
 replicated."""
-import copy
 from math import ceil
 
 from base import BaseTapTest
@@ -9,17 +8,14 @@ from tap_tester.logger import LOGGER
 
 
 class TestZendeskChatPagination(BaseTapTest):
-
-
-
     @staticmethod
     def name():
         return "tap_tester_zendesk_chat_pagination"
 
     def test_run(self):
         """
-        - Verify that for each stream you can get multiple pages of data.  
-        
+        - Verify that for each stream you can get multiple pages of data.
+
         This requires we ensure more than 1 page of data exists at all times for any given stream.
         - Verify by pks that the data replicated matches the data we expect.
         """
@@ -73,8 +69,6 @@ class TestZendeskChatPagination(BaseTapTest):
                             self.assertTrue(
                                 current_page.isdisjoint(other_page), msg=f"other_page_primary_keys={other_page}"
                             )
-
-
 
     def get_properties(self, original: bool = True):
         """Configuration properties required for the tap."""
