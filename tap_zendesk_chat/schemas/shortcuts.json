@@ -48,6 +48,15 @@
       "items": {
         "type": "integer"
       }
+    },
+    "agents": {
+      "type": [
+        "null",
+        "array"
+      ],
+      "items": {
+        "type": "integer"
+      }
     }
   },
   "type": [
