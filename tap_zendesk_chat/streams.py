@@ -22,9 +22,10 @@ class Stream:
     replication_key = set()
     forced_replication_method = "FULL_TABLE"
 
-    def __init__(self, tap_stream_id, pk_fields):
+    def __init__(self, tap_stream_id, pk_fields,auto_fields=None):
         self.tap_stream_id = tap_stream_id
         self.pk_fields = pk_fields
+        self.auto_fields = auto_fields
 
     def metrics(self, page):
         with metrics.record_counter(self.tap_stream_id) as counter:
@@ -208,13 +209,13 @@ class Account(Stream):
 
 
 all_streams = [
-    Account("account", ["account_key"]),
-    Agents("agents", ["id"]),
-    Bans("bans", ["id"]),
-    Chats("chats", ["id"]),
-    Everything("departments", ["id"]),
-    Everything("goals", ["id"]),
-    Everything("shortcuts", ["name"]),
-    Everything("triggers", ["id"]),
+    Account("account", ["account_key"],[]),
+    Agents("agents", ["id"],[]),
+    Bans("bans", ["id"],[]),
+    Chats("chats", ["id"],["type"]),
+    Everything("departments", ["id"],[]),
+    Everything("goals", ["id"],[]),
+    Everything("shortcuts", ["name"],[]),
+    Everything("triggers", ["id"],[]),
 ]
 STREAMS = {s.tap_stream_id: s for s in all_streams}
