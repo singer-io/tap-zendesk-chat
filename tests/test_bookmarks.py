@@ -8,17 +8,6 @@ class TestZendeskChatBookmarks(BaseTapTest):
     """Test tap sets a bookmark and respects it for the next sync of a
     stream."""
 
-    expected_record_count = {
-        "agents": 3,
-        "chats": 1875,
-        "bans": 23,
-        "account": 1,
-        "shortcuts": 4,
-        "triggers": 12,
-        "departments": 1,
-        "goals": 2,
-    }
-
     @staticmethod
     def name():
         return "tap_tester_zendesk_chat_bookmarks"
@@ -98,8 +87,6 @@ class TestZendeskChatBookmarks(BaseTapTest):
                 first_bookmark_key_value = first_sync_bookmarks.get("bookmarks", {}).get(stream)
                 second_bookmark_key_value = second_sync_bookmarks.get("bookmarks", {}).get(stream)
 
-                # Assert we synced the expected number of records. Ensures pagination happens
-                # self.assertEqual(first_sync_count, self.expected_record_count[stream])
 
                 if expected_replication_method == self.INCREMENTAL:  # chats is the only incremental stream
 
