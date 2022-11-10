@@ -47,8 +47,9 @@ class TestZendeskChatAutomaticFields(BaseTapTest):
                     msg="The number of records is not over the stream max limit",
                 )
                 if stream == "chats":
-                     for actual_keys in record_messages_keys:
-                        self.assertTrue(actual_keys.issubset(expected_keys))
+                    expected_keys_offline_msg = self.expected_automatic_fields().get(stream) - {"end_timestamp"}
+                    for actual_keys in record_messages_keys:
+                        self.assertTrue(actual_keys==expected_keys_offline_msg or actual_keys==expected_keys)
                 else:
                     for actual_keys in record_messages_keys:
                         self.assertSetEqual(expected_keys, actual_keys)
