@@ -22,10 +22,9 @@ class Stream:
     replication_key = set()
     forced_replication_method = "FULL_TABLE"
 
-    def __init__(self, tap_stream_id, pk_fields,auto_fields=None):
+    def __init__(self, tap_stream_id, pk_fields):
         self.tap_stream_id = tap_stream_id
         self.pk_fields = pk_fields
-        self.auto_fields = auto_fields
 
     def metrics(self, page):
         with metrics.record_counter(self.tap_stream_id) as counter:
@@ -84,7 +83,7 @@ class Chats(Stream):
         return ctx.client.request(self.tap_stream_id, params=params, url_extra="/search")
 
     def _pull(
-        self, ctx, chat_type, ts_field, *, full_sync, schema: Dict, stream_metadata: Dict, transformer: Transformer
+        self, ctx, chat_type, ts_field, full_sync, schema: Dict, stream_metadata: Dict, transformer: Transformer
     ):
         """Pulls and writes pages of data for the given chat_type, where
         chat_type can be either "chat" or "offline_msg".
@@ -105,10 +104,8 @@ class Chats(Stream):
         next_url = ctx.bookmark(url_offset_key)
         max_bookmark = start_time
 
-        interval_days = 14
-        interval_days_str = ctx.config.get("chat_search_interval_days")
-        if interval_days_str is not None:
-            interval_days = int(interval_days_str)
+
+        interval_days = int(ctx.config.get("chat_search_interval_days","14"))
         LOGGER.info("Using chat_search_interval_days: %s", interval_days)
 
         intervals = break_into_intervals(interval_days, start_time, ctx.now)
@@ -122,8 +119,7 @@ class Chats(Stream):
                 next_url = search_resp["next_url"]
                 ctx.set_bookmark(url_offset_key, next_url)
                 ctx.write_state()
-                chat_ids = [r["id"] for r in search_resp["results"]]
-                chats = self._bulk_chats(ctx, chat_ids)
+                chats = self._bulk_chats(ctx, [r["id"] for r in search_resp["results"]])
                 if chats:
                     chats = [transformer.transform(rec, schema, metadata=stream_metadata) for rec in chats]
                     self.write_page(chats)
@@ -179,12 +175,11 @@ class Bans(Stream):
     def sync(self, ctx, schema: Dict, stream_metadata: Dict, transformer: Transformer):
         since_id_offset = [self.tap_stream_id, "offset", "id"]
         since_id = ctx.bookmark(since_id_offset) or 0
-        while True:
 
+        while True:
             params = {
                 "since_id": since_id,
                 "limit": ctx.config.get("bans_page_limit", 100),
-                # TODO: Add Additional advanced property in connection_properties
             }
             response = ctx.client.request(self.tap_stream_id, params)
             page = response.get("visitor", []) + response.get("ip_address", [])
@@ -207,15 +202,14 @@ class Account(Stream):
         page = transformer.transform(response, schema, metadata=stream_metadata)
         self.write_page([page])
 
+STREAMS = {
+    "account":Account("account", ["account_key"]),
+    "agents":Agents("agents", ["id"]),
+    "bans":Bans("bans", ["id"]),
+    "chats":Chats("chats", ["id"]),
+    "departments":Everything("departments", ["id"]),
+    "goals":Everything("goals", ["id"]),
+    "shortcuts":Everything("shortcuts", ["name"]),
+    "triggers":Everything("triggers", ["id"]),
+}
 
-all_streams = [
-    Account("account", ["account_key"],[]),
-    Agents("agents", ["id"],[]),
-    Bans("bans", ["id"],[]),
-    Chats("chats", ["id"],["type"]),
-    Everything("departments", ["id"],[]),
-    Everything("goals", ["id"],[]),
-    Everything("shortcuts", ["name"],[]),
-    Everything("triggers", ["id"],[]),
-]
-STREAMS = {s.tap_stream_id: s for s in all_streams}
