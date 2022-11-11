@@ -1,5 +1,4 @@
 from singer import (
-    Catalog,
     Transformer,
     get_logger,
     metadata,
@@ -13,10 +12,10 @@ from .streams import STREAMS
 LOGGER = get_logger()
 
 
-def sync(ctx, catalog: Catalog):
+def sync(ctx):
     """performs sync for selected streams."""
     with Transformer() as transformer:
-        for stream in catalog.get_selected_streams(ctx.state):
+        for stream in ctx.catalog.get_selected_streams(ctx.state):
             tap_stream_id = stream.tap_stream_id
             stream_schema = stream.schema.to_dict()
             stream_metadata = metadata.to_map(stream.metadata)
