@@ -8,7 +8,7 @@ from singer import (
     write_state,
 )
 
-from . import streams
+from .streams import STREAMS
 
 LOGGER = get_logger()
 
@@ -20,7 +20,7 @@ def sync(ctx, catalog: Catalog):
             tap_stream_id = stream.tap_stream_id
             stream_schema = stream.schema.to_dict()
             stream_metadata = metadata.to_map(stream.metadata)
-            stream_obj = streams.STREAMS[tap_stream_id]
+            stream_obj = STREAMS[tap_stream_id]()
             LOGGER.info("Starting sync for stream: %s", tap_stream_id)
             ctx.state = set_currently_syncing(ctx.state, tap_stream_id)
             ctx.write_state()

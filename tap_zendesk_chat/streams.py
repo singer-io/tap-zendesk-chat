@@ -10,7 +10,7 @@ from .utils import break_into_intervals
 LOGGER = singer.get_logger()
 
 
-class Stream:
+class BaseStream:
     """Information about and functions for syncing streams.
 
     Important class properties:
@@ -19,12 +19,8 @@ class Stream:
     :var pk_fields: A list of primary key fields
     """
 
-    replication_key = set()
-    forced_replication_method = "FULL_TABLE"
-
-    def __init__(self, tap_stream_id: str, pk_fields: List):
-        self.tap_stream_id = tap_stream_id
-        self.pk_fields = pk_fields
+    valid_replication_keys = set()
+    tap_stream_id = None
 
     def metrics(self, page):
         "updates the metrics counter for the current stream"
@@ -37,15 +33,30 @@ class Stream:
         singer.write_records(self.tap_stream_id, page)
         self.metrics(page)
 
-
-class Everything(Stream):
     def sync(self, ctx, schema: Dict, stream_metadata: Dict, transformer: Transformer):
         response = ctx.client.request(self.tap_stream_id)
         page = [transformer.transform(rec, schema, metadata=stream_metadata) for rec in response]
         self.write_page(page)
 
 
-class Agents(Stream):
+class Account(BaseStream):
+
+    tap_stream_id = "account"
+    key_properties = ["account_key"]
+    forced_replication_method = "FULL_TABLE"
+
+    def sync(self, ctx, schema: Dict, stream_metadata: Dict, transformer: Transformer):
+        response = ctx.client.request(self.tap_stream_id)
+        page = transformer.transform(response, schema, metadata=stream_metadata)
+        self.write_page([page])
+
+
+class Agents(BaseStream):
+
+    tap_stream_id = "agents"
+    key_properties = ["id"]
+    forced_replication_method = "FULL_TABLE"
+
     def sync(self, ctx, schema: Dict, stream_metadata: Dict, transformer: Transformer):
         since_id_offset = [self.tap_stream_id, "offset", "id"]
         since_id = ctx.bookmark(since_id_offset) or 0
@@ -62,12 +73,41 @@ class Agents(Stream):
             ctx.set_bookmark(since_id_offset, since_id)
             ctx.write_state()
         ctx.set_bookmark(since_id_offset, None)
-        ctx.write_state()
 
 
-class Chats(Stream):
-    replication_key = {"timestamp", "end_timestamp"}
+class Bans(BaseStream):
+
+    tap_stream_id = "bans"
+    key_properties = ["id"]
+    forced_replication_method = "FULL_TABLE"
+
+    def sync(self, ctx, schema: Dict, stream_metadata: Dict, transformer: Transformer):
+        since_id_offset = [self.tap_stream_id, "offset", "id"]
+        since_id = ctx.bookmark(since_id_offset) or 0
+
+        while True:
+            params = {
+                "since_id": since_id,
+                "limit": ctx.config.get("bans_page_limit", 100),
+            }
+            response = ctx.client.request(self.tap_stream_id, params)
+            page = response.get("visitor", []) + response.get("ip_address", [])
+            if not page:
+                break
+            page = response["visitor"] + response["ip_address"]
+            self.write_page([transformer.transform(rec, schema, metadata=stream_metadata) for rec in page])
+            since_id = page[-1]["id"] + 1
+            ctx.set_bookmark(since_id_offset, since_id)
+            ctx.write_state()
+        ctx.set_bookmark(since_id_offset, None)
+
+
+class Chats(BaseStream):
+
+    tap_stream_id = "chats"
+    key_properties = ["id"]
     forced_replication_method = "INCREMENTAL"
+    valid_replication_keys = {"timestamp", "end_timestamp"}
 
     def _bulk_chats(self, ctx, chat_ids: List):
         if not chat_ids:
@@ -164,45 +204,37 @@ class Chats(Stream):
             ctx.write_state()
 
 
-class Bans(Stream):
-    def sync(self, ctx, schema: Dict, stream_metadata: Dict, transformer: Transformer):
-        since_id_offset = [self.tap_stream_id, "offset", "id"]
-        since_id = ctx.bookmark(since_id_offset) or 0
-
-        while True:
-            params = {
-                "since_id": since_id,
-                "limit": ctx.config.get("bans_page_limit", 100),
-            }
-            response = ctx.client.request(self.tap_stream_id, params)
-            page = response.get("visitor", []) + response.get("ip_address", [])
-            if not page:
-                break
-            page = response["visitor"] + response["ip_address"]
-            self.write_page([transformer.transform(rec, schema, metadata=stream_metadata) for rec in page])
-            since_id = page[-1]["id"] + 1
-            ctx.set_bookmark(since_id_offset, since_id)
-            ctx.write_state()
-        ctx.set_bookmark(since_id_offset, None)
-        ctx.write_state()
+class Departments(BaseStream):
+    tap_stream_id = "departments"
+    key_properties = ["id"]
+    forced_replication_method = "FULL_TABLE"
 
 
-class Account(Stream):
-    def sync(self, ctx, schema: Dict, stream_metadata: Dict, transformer: Transformer):
-        # The account endpoint returns a single item, so we have to wrap it in
-        # a list to write a "page"
-        response = ctx.client.request(self.tap_stream_id)
-        page = transformer.transform(response, schema, metadata=stream_metadata)
-        self.write_page([page])
+class Goals(BaseStream):
+    tap_stream_id = "goals"
+    key_properties = ["id"]
+    forced_replication_method = "FULL_TABLE"
+
+
+class Shortcuts(BaseStream):
+    tap_stream_id = "shortcuts"
+    key_properties = ["name"]
+    forced_replication_method = "FULL_TABLE"
+
+
+class Triggers(BaseStream):
+    tap_stream_id = "triggers"
+    key_properties = ["id"]
+    forced_replication_method = "FULL_TABLE"
 
 
 STREAMS = {
-    "account": Account("account", ["account_key"]),
-    "agents": Agents("agents", ["id"]),
-    "bans": Bans("bans", ["id"]),
-    "chats": Chats("chats", ["id"]),
-    "departments": Everything("departments", ["id"]),
-    "goals": Everything("goals", ["id"]),
-    "shortcuts": Everything("shortcuts", ["name"]),
-    "triggers": Everything("triggers", ["id"]),
+    Account.tap_stream_id: Account,
+    Agents.tap_stream_id: Agents,
+    Bans.tap_stream_id: Bans,
+    Chats.tap_stream_id: Chats,
+    Departments.tap_stream_id: Departments,
+    Goals.tap_stream_id: Goals,
+    Shortcuts.tap_stream_id: Shortcuts,
+    Triggers.tap_stream_id: Triggers,
 }
