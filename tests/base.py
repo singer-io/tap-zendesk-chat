@@ -1,24 +1,16 @@
-"""
-Setup expectations for test sub classes
-Run discovery for as a prerequisite for most tests
-"""
-import unittest
-import os
+"""Setup expectations for test sub classes Run discovery for as a prerequisite
+for most tests."""
 import json
-import decimal
+import os
+import unittest
 from datetime import datetime as dt
 from datetime import timezone as tz
-from singer import utils
+from typing import Dict, Set
 
 from tap_tester import connections, menagerie, runner
 
 
 class BaseTapTest(unittest.TestCase):
-    """
-    Setup expectations for test sub classes
-    Run discovery for as a prerequisite for most tests
-    """
-
     REPLICATION_KEYS = "valid-replication-keys"
     PRIMARY_KEYS = "table-key-properties"
     REPLICATION_METHOD = "forced-replication-method"
@@ -28,20 +20,18 @@ class BaseTapTest(unittest.TestCase):
 
     @staticmethod
     def tap_name():
-        """The name of the tap"""
+        """The name of the tap."""
         return "tap-zendesk-chat"
 
     @staticmethod
     def get_type():
-        """the expected url route ending"""
+        """the expected url route ending."""
         return "platform.zendesk-chat"
 
     def get_properties(self, original: bool = True):
         """Configuration properties required for the tap."""
 
-        return_value = {
-            'start_date': dt.strftime(dt.today(), self.START_DATE_FORMAT)
-        }
+        return_value = {"start_date": dt.strftime(dt.today(), self.START_DATE_FORMAT)}
 
         if original:
             return return_value
@@ -55,40 +45,25 @@ class BaseTapTest(unittest.TestCase):
 
     @staticmethod
     def get_credentials():
-        """Authentication information for the test account"""
-        return {
-            'access_token': os.getenv('TAP_ZENDESK_CHAT_ACCESS_TOKEN')
-        }
+        """Authentication information for the test account."""
+        return {"access_token": os.getenv("TAP_ZENDESK_CHAT_ACCESS_TOKEN")}
 
     def expected_metadata(self):
-        """The expected streams and metadata about the streams"""
+        """The expected streams and metadata about the streams."""
 
         default = {
             self.PRIMARY_KEYS: {"id"},
             self.REPLICATION_METHOD: self.FULL,
         }
 
-        shortcuts_rep_key = {
-            self.PRIMARY_KEYS: {"name"},
-            self.REPLICATION_METHOD: self.FULL
-        }
+        shortcuts_rep_key = {self.PRIMARY_KEYS: {"name"}, self.REPLICATION_METHOD: self.FULL}
 
-
-        account_rep_key = {
-            self.PRIMARY_KEYS: {"account_key"},
-            self.REPLICATION_METHOD: self.FULL
-        }
+        account_rep_key = {self.PRIMARY_KEYS: {"account_key"}, self.REPLICATION_METHOD: self.FULL}
 
         chats_rep_key = {
             self.PRIMARY_KEYS: {"id"},
-            self.REPLICATION_KEYS: {'timestamp', 'end_timestamp'},
-            self.REPLICATION_METHOD: self.INCREMENTAL
-        }
-
-        agents_rep_key = {
-            self.PRIMARY_KEYS: {"id"},
-            self.REPLICATION_METHOD: self.FULL,
-            self.REPLICATION_KEYS: {'id'}
+            self.REPLICATION_KEYS: {"timestamp", "end_timestamp"},
+            self.REPLICATION_METHOD: self.INCREMENTAL,
         }
 
         return {
@@ -103,51 +78,55 @@ class BaseTapTest(unittest.TestCase):
         }
 
     def expected_streams(self):
-        """A set of expected stream names"""
+        """A set of expected stream names."""
         return set(self.expected_metadata().keys())
 
     def expected_primary_keys(self):
-        """
-        return a dictionary with key of table name
-        and value as a set of primary key fields
-        """
-        return {table: properties.get(self.PRIMARY_KEYS, set())
-                for table, properties in self.expected_metadata().items()}
+        """return a dictionary with key of table name and value as a set of
+        primary key fields."""
+        return {
+            table: properties.get(self.PRIMARY_KEYS, set()) for table, properties in self.expected_metadata().items()
+        }
 
     def expected_replication_keys(self):
-        """
-        return a dictionary with key of table name
-        and value as a set of replication key fields
-        """
-        return {table: properties.get(self.REPLICATION_KEYS, set())
-                for table, properties in self.expected_metadata().items()}
+        """return a dictionary with key of table name and value as a set of
+        replication key fields."""
+        return {
+            table: properties.get(self.REPLICATION_KEYS, set())
+            for table, properties in self.expected_metadata().items()
+        }
 
     def expected_automatic_fields(self):
-        return {table: self.expected_primary_keys().get(table) | self.expected_replication_keys().get(table)
-                for table in self.expected_metadata()}
+        return {
+            table: self.expected_primary_keys().get(table) | self.expected_replication_keys().get(table)
+            for table in self.expected_metadata()
+        }
 
     def expected_replication_method(self):
-        """return a dictionary with key of table name nd value of replication method"""
-        return {table: properties.get(self.REPLICATION_METHOD, None)
-                for table, properties
-                in self.expected_metadata().items()}
+        """return a dictionary with key of table name and value of replication
+        method."""
+        return {
+            table: properties.get(self.REPLICATION_METHOD, None)
+            for table, properties in self.expected_metadata().items()
+        }
 
     def setUp(self):
-        """Verify that you have set the prerequisites to run the tap (creds, etc.)"""
-        env_keys = {'TAP_ZENDESK_CHAT_ACCESS_TOKEN'}
+        """Verify that you have set the prerequisites to run the tap (creds,
+        etc.)"""
+        env_keys = {"TAP_ZENDESK_CHAT_ACCESS_TOKEN"}
         missing_envs = [x for x in env_keys if os.getenv(x) is None]
         if missing_envs:
-            raise Exception("Set environment variables: {}".format(missing_envs))
+            raise Exception(f"Set environment variables: {missing_envs}")
 
     #########################
     #   Helper Methods      #
     #########################
 
     def run_sync(self, conn_id):
-        """
-        Run a sync job and make sure it exited properly.
-        Return a dictionary with keys of streams synced
-        and values of records synced for each stream
+        """Run a sync job and make sure it exited properly.
+
+        Return a dictionary with keys of streams synced and values of
+        records synced for each stream
         """
         # Run a sync job using orchestrator
         sync_job_name = runner.run_sync_mode(self, conn_id)
@@ -158,14 +137,14 @@ class BaseTapTest(unittest.TestCase):
 
         # Verify actual rows were synced
         sync_record_count = runner.examine_target_output_file(
-            self, conn_id, self.expected_streams(), self.expected_primary_keys())
+            self, conn_id, self.expected_streams(), self.expected_primary_keys()
+        )
         return sync_record_count
 
     @staticmethod
     def local_to_utc(date: dt):
-        """Convert a datetime with timezone information to utc"""
-        utc = dt(date.year, date.month, date.day, date.hour, date.minute,
-                 date.second, date.microsecond, tz.utc)
+        """Convert a datetime with timezone information to utc."""
+        utc = dt(date.year, date.month, date.day, date.hour, date.minute, date.second, date.microsecond, tz.utc)
 
         if date.tzinfo and hasattr(date.tzinfo, "_offset"):
             utc += date.tzinfo._offset
@@ -173,37 +152,40 @@ class BaseTapTest(unittest.TestCase):
         return utc
 
     def max_bookmarks_by_stream(self, sync_records):
-        """
-        Return the maximum value for the replication key for the events stream
-        which is the bookmark expected value for updated records.
+        """Return the maximum value for the replication key for the events
+        stream which is the bookmark expected value for updated records.
 
-        Comparisons are based on the class of the bookmark value. Dates will be
-        string compared which works for ISO date-time strings.
+        Comparisons are based on the class of the bookmark value. Dates
+        will be string compared which works for ISO date-time strings.
         """
         max_bookmarks = {}
         chats_offline = []
         chats = []
         for stream, batch in sync_records.items():
-            upsert_messages = [m for m in batch.get('messages') if m['action'] == 'upsert']
+            upsert_messages = [m for m in batch.get("messages") if m["action"] == "upsert"]
             if stream == "chats":
                 for msg in upsert_messages:
-                    if msg['data']['type'] == 'chat':
+                    if msg["data"]["type"] == "chat":
                         chats.append(msg)
-                    elif msg['data']['type'] == 'offline_msg':
+                    elif msg["data"]["type"] == "offline_msg":
                         chats_offline.append(msg)
                     else:
-                        raise RuntimeError("Got unexpected chat type: " + msg['data']['type'])
+                        raise RuntimeError("Got unexpected chat type: " + msg["data"]["type"])
                 chats_bookmark_key = "end_timestamp"
                 chats_offline_bookmark_key = "timestamp"
                 bk_values_chats = [message["data"].get(chats_bookmark_key) for message in chats]
                 bk_values_chats_offline = [message["data"].get(chats_offline_bookmark_key) for message in chats_offline]
-                max_bookmarks['chats.chat'] = {chats_bookmark_key : max(bk_values_chats, default=None)}
-                max_bookmarks['chats.offline_msg'] = {chats_offline_bookmark_key : max(bk_values_chats_offline, default=None)}
+                max_bookmarks["chats.chat"] = {chats_bookmark_key: max(bk_values_chats, default=None)}
+                max_bookmarks["chats.offline_msg"] = {
+                    chats_offline_bookmark_key: max(bk_values_chats_offline, default=None)
+                }
             else:
 
                 stream_bookmark_key = self.expected_replication_keys().get(stream) or set()
                 with self.subTest(stream=stream):
-                    assert not stream_bookmark_key or len(stream_bookmark_key) == 1  # There shouldn't be a compound replication key
+                    assert (
+                        not stream_bookmark_key or len(stream_bookmark_key) == 1
+                    )  # There shouldn't be a compound replication key
                 if not stream_bookmark_key:
                     continue
                 stream_bookmark_key = stream_bookmark_key.pop()
@@ -221,34 +203,35 @@ class BaseTapTest(unittest.TestCase):
                         max_bookmarks[stream][stream_bookmark_key] = bk_value
         return max_bookmarks
 
-
     def min_bookmarks_by_stream(self, sync_records):
-        """
-        Return the minimum value for the replication key for each stream
-        """
+        """Return the minimum value for the replication key for each stream."""
         min_bookmarks = {}
         chats = []
         chats_offline = []
         for stream, batch in sync_records.items():
-            upsert_messages = [m for m in batch.get('messages') if m['action'] == 'upsert']
+            upsert_messages = [m for m in batch.get("messages") if m["action"] == "upsert"]
             if stream == "chats":
                 for msg in upsert_messages:
-                    if msg['data']['type'] == 'chat':
+                    if msg["data"]["type"] == "chat":
                         chats.append(msg)
-                    elif msg['data']['type'] == 'offline_msg':
+                    elif msg["data"]["type"] == "offline_msg":
                         chats_offline.append(msg)
                     else:
-                        raise RuntimeError("Got unexpected chat type: " + msg['data']['type'])
+                        raise RuntimeError("Got unexpected chat type: " + msg["data"]["type"])
                 chats_bookmark_key = "end_timestamp"
                 chats_offline_bookmark_key = "timestamp"
                 bk_values_chats = [message["data"].get(chats_bookmark_key) for message in chats]
                 bk_values_chats_offline = [message["data"].get(chats_offline_bookmark_key) for message in chats_offline]
-                min_bookmarks['chats.chat'] = {chats_bookmark_key : min(bk_values_chats, default=None)}
-                min_bookmarks['chats.offline_msg'] = {chats_offline_bookmark_key : min(bk_values_chats_offline, default=None)}
+                min_bookmarks["chats.chat"] = {chats_bookmark_key: min(bk_values_chats, default=None)}
+                min_bookmarks["chats.offline_msg"] = {
+                    chats_offline_bookmark_key: min(bk_values_chats_offline, default=None)
+                }
             else:
                 stream_bookmark_key = self.expected_replication_keys().get(stream) or set()
                 with self.subTest(stream=stream):
-                    assert not stream_bookmark_key or len(stream_bookmark_key) == 1  # There shouldn't be a compound replication key
+                    assert (
+                        not stream_bookmark_key or len(stream_bookmark_key) == 1
+                    )  # There shouldn't be a compound replication key
                 if not stream_bookmark_key:
                     continue
                 stream_bookmark_key = stream_bookmark_key.pop()
@@ -264,36 +247,32 @@ class BaseTapTest(unittest.TestCase):
 
                     if bk_value < min_bookmarks[stream][stream_bookmark_key]:
                         min_bookmarks[stream][stream_bookmark_key] = bk_value
-        print(min_bookmarks)
         return min_bookmarks
 
-
     def select_all_streams_and_fields(self, conn_id, catalogs, select_all_fields: bool = True, exclude_streams=None):
-        """Select all streams and all fields within streams"""
+        """Select all streams and all fields within streams."""
 
         for catalog in catalogs:
-            if exclude_streams and catalog.get('stream_name') in exclude_streams:
+            if exclude_streams and catalog.get("stream_name") in exclude_streams:
                 continue
-            schema = menagerie.get_annotated_schema(conn_id, catalog['stream_id'])
+            schema = menagerie.get_annotated_schema(conn_id, catalog["stream_id"])
             non_selected_properties = []
             if not select_all_fields:
                 # get a list of all properties so that none are selected
-                non_selected_properties = schema.get('annotated-schema', {}).get(
-                    'properties', {})
+                non_selected_properties = schema.get("annotated-schema", {}).get("properties", {})
                 # remove properties that are automatic
-                for prop in self.expected_automatic_fields().get(catalog['stream_name'], []):
+                for prop in self.expected_automatic_fields().get(catalog["stream_name"], []):
                     if prop in non_selected_properties:
                         del non_selected_properties[prop]
                 non_selected_properties = non_selected_properties.keys()
             additional_md = []
 
             connections.select_catalog_and_fields_via_metadata(
-                conn_id, catalog, schema, additional_md=additional_md,
-                non_selected_fields=non_selected_properties
+                conn_id, catalog, schema, additional_md=additional_md, non_selected_fields=non_selected_properties
             )
 
     def create_connection(self, original_properties: bool = True, original_credentials: bool = True):
-        """Create a new connection with the test name"""
+        """Create a new connection with the test name."""
         # Create the connection
         conn_id = connections.ensure_connection(self, original_properties, original_credentials)
 
@@ -309,18 +288,18 @@ class BaseTapTest(unittest.TestCase):
     def get_selected_fields_from_metadata(metadata):
         selected_fields = set()
         for field in metadata:
-            is_field_metadata = len(field['breadcrumb']) > 1
-            inclusion_automatic_or_selected = (field['metadata']['inclusion'] == 'automatic'
-                                               or field['metadata']['selected'] is True)
-            if is_field_metadata and inclusion_automatic_or_selected:
-                selected_fields.add(field['breadcrumb'][1])
+            is_field_metadata = len(field["breadcrumb"]) > 1
+            if is_field_metadata:
+                inclusion_automatic_or_selected = (
+                    field["metadata"]["inclusion"] == "automatic" or field["metadata"]["selected"] is True
+                )
+                if inclusion_automatic_or_selected:
+                    selected_fields.add(field["breadcrumb"][1])
         return selected_fields
 
-
     def run_and_verify_check_mode(self, conn_id):
-        """
-        Run the tap in check mode and verify it succeeds.
-        This should be ran prior to field selection and initial sync.
+        """Run the tap in check mode and verify it succeeds. This should be ran
+        prior to field selection and initial sync.
 
         Return the connection id and found catalogs from menagerie.
         """
@@ -333,23 +312,20 @@ class BaseTapTest(unittest.TestCase):
 
         found_catalogs = menagerie.get_catalogs(conn_id)
 
-        self.assertGreater(len(found_catalogs), 0, msg="unable to locate schemas for connection {}".format(conn_id))
-        found_catalog_names = set(map(lambda c: c['tap_stream_id'], found_catalogs))
+        self.assertGreater(len(found_catalogs), 0, msg=f"unable to locate schemas for connection {conn_id}")
+        found_catalog_names = set(map(lambda c: c["tap_stream_id"], found_catalogs))
         diff = self.expected_streams().symmetric_difference(found_catalog_names)
-        self.assertEqual(len(diff), 0, msg="discovered schemas do not match: {}".format(diff))
-        print("discovered schemas are OK")
-
+        self.assertEqual(len(diff), 0, msg=f"discovered schemas do not match: {diff}")
         return found_catalogs
 
     def run_and_verify_sync(self, conn_id, clear_state=False):
-        """
-        Clear the connections state in menagerie and Run a Sync.
-        Verify the exit code following the sync.
+        """Clear the connections state in menagerie and Run a Sync. Verify the
+        exit code following the sync.
 
         Return the connection id and record count by stream
         """
         if clear_state:
-            #clear state
+            # clear state
             menagerie.set_state(conn_id, {})
 
         # run sync
@@ -360,52 +336,57 @@ class BaseTapTest(unittest.TestCase):
         menagerie.verify_sync_exit_status(self, exit_status, sync_job_name)
 
         # read target output
-        record_count_by_stream = runner.examine_target_output_file(self, conn_id,
-                                                                   self.expected_streams(),
-                                                                   self.expected_primary_keys())
+        record_count_by_stream = runner.examine_target_output_file(
+            self, conn_id, self.expected_streams(), self.expected_primary_keys()
+        )
 
         return record_count_by_stream
 
-    def perform_and_verify_table_and_field_selection(self, conn_id, found_catalogs, streams_to_select, select_all_fields=True):
-        """
-        Perform table and field selection based off of the streams to select set and field selection parameters.
-        Verfify this results in the expected streams selected and all or no fields selected for those streams.
+    def perform_and_verify_table_and_field_selection(
+        self, conn_id, found_catalogs, streams_to_select, select_all_fields=True
+    ):
+        """Perform table and field selection based off of the streams to select
+        set and field selection parameters.
+
+        Verify this results in the expected streams selected and all or
+        no fields selected for those streams.
         """
         # Select all available fields or select no fields from all testable streams
         exclude_streams = self.expected_streams().difference(streams_to_select)
         self.select_all_streams_and_fields(
-            conn_id=conn_id, catalogs=found_catalogs, select_all_fields=select_all_fields, exclude_streams=exclude_streams
+            conn_id=conn_id,
+            catalogs=found_catalogs,
+            select_all_fields=select_all_fields,
+            exclude_streams=exclude_streams,
         )
 
         catalogs = menagerie.get_catalogs(conn_id)
 
         # Ensure our selection worked
         for cat in catalogs:
-            catalog_entry = menagerie.get_annotated_schema(conn_id, cat['stream_id'])
+            catalog_entry = menagerie.get_annotated_schema(conn_id, cat["stream_id"])
             # Verify all testable streams are selected
-            selected = catalog_entry.get('annotated-schema').get('selected')
-            print("Validating selection on {}: {}".format(cat['stream_name'], selected))
-            if cat['stream_name'] not in streams_to_select:
+            selected = catalog_entry.get("annotated-schema").get("selected")
+            if cat["stream_name"] not in streams_to_select:
                 self.assertFalse(selected, msg="Stream selected, but not testable.")
-                continue # Skip remaining assertions if we aren't selecting this stream
+                continue  # Skip remaining assertions if we aren't selecting this stream
             self.assertTrue(selected, msg="Stream not selected.")
 
             if select_all_fields:
                 # Verify all fields within each selected stream are selected
-                for field, field_props in catalog_entry.get('annotated-schema').get('properties').items():
-                    field_selected = field_props.get('selected')
-                    print("\tValidating selection on {}.{}: {}".format(cat['stream_name'], field, field_selected))
+                for field, field_props in catalog_entry.get("annotated-schema").get("properties").items():
+                    field_selected = field_props.get("selected")
                     self.assertTrue(field_selected, msg="Field not selected.")
             else:
                 # Verify only automatic fields are selected
-                expected_automatic_fields = self.expected_automatic_fields().get(cat['tap_stream_id'])
-                selected_fields = self.get_selected_fields_from_metadata(catalog_entry['metadata'])
+                expected_automatic_fields = self.expected_automatic_fields().get(cat["tap_stream_id"])
+                selected_fields = self.get_selected_fields_from_metadata(catalog_entry["metadata"])
                 self.assertEqual(expected_automatic_fields, selected_fields)
 
     def expected_schema_keys(self, stream):
-        props = self._load_schemas(stream).get(stream).get('properties')
+        props = self._load_schemas(stream).get(stream).get("properties")
         if not props:
-            props = self._load_schemas(stream, shared=True).get(stream).get('properties')
+            props = self._load_schemas(stream, shared=True).get(stream).get("properties")
 
         assert props, "schema not configured proprerly"
 
@@ -420,7 +401,7 @@ class BaseTapTest(unittest.TestCase):
 
         file_name = "shared/" + stream[:-1] + ".json" if shared else stream + ".json"
         path = self._get_abs_path("schemas") + "/" + file_name
-        final_path = path.replace('tests', self.tap_name().replace('-', '_'))
+        final_path = path.replace("tests", self.tap_name().replace("-", "_"))
 
         with open(final_path) as file:
             schemas[stream] = json.load(file)
@@ -429,5 +410,36 @@ class BaseTapTest(unittest.TestCase):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.start_date = self.get_properties().get('start_date')
-        self.maxDiff=None
+        self.start_date = self.get_properties().get("start_date")
+        self.maxDiff = None
+
+    def create_interrupt_sync_state(
+        self, state: Dict, interrupt_stream: str, pending_streams: Set, start_date: str
+    ) -> Dict:
+        """This function will create a new interrupt sync bookmark state."""
+        expected_replication_keys = self.expected_replication_keys()
+        bookmark_state = state["bookmarks"]
+        if self.expected_metadata()[interrupt_stream][self.REPLICATION_METHOD] == self.INCREMENTAL:
+            replication_key = next(iter(expected_replication_keys[interrupt_stream]))
+            bookmark_date = bookmark_state[interrupt_stream][replication_key]
+            updated_bookmark_date = self.get_mid_point_date(start_date, bookmark_date)
+            bookmark_state[interrupt_stream][replication_key] = updated_bookmark_date
+        state["currently_syncing"] = interrupt_stream
+        # For pending streams, update the bookmark_value to start-date
+        for stream in iter(pending_streams):
+            # Only incremental streams should have the bookmark value
+            if self.expected_metadata()[stream][self.REPLICATION_METHOD] == self.INCREMENTAL:
+                replication_key = next(iter(expected_replication_keys[stream]))
+                bookmark_state[stream][replication_key] = start_date
+            state["bookmarks"] = bookmark_state
+        return state
+
+    def get_mid_point_date(self, start_date: str, bookmark_date: str) -> str:
+        """Function to find the middle date between two dates."""
+        date_format = "%Y-%m-%dT%H:%M:%S.%fZ"
+        start_date_dt = dt.strptime(start_date, date_format)
+        bookmark_date_dt = dt.strptime(bookmark_date, date_format)
+        mid_date_dt = start_date_dt.date() + (bookmark_date_dt - start_date_dt) / 2
+        # Convert datetime object to string format
+        mid_date = mid_date_dt.strftime(date_format)
+        return mid_date
