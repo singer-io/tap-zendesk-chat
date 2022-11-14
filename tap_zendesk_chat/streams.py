@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import timedelta
 from typing import Dict, List
 
 import singer
@@ -146,7 +146,7 @@ class Chats(BaseStream):
                 else:
                     params = {"q": f"type:{chat_type} AND {ts_field}:[{start_dt.isoformat()} TO {end_dt.isoformat()}]"}
                     search_resp = ctx.client.request(self.tap_stream_id, params=params, url_extra="/search")
-                
+
                 next_url = search_resp["next_url"]
                 ctx.set_bookmark(url_offset_key, next_url)
                 ctx.write_state()

@@ -13,9 +13,9 @@ class RateLimitException(Exception):
 class Client:
     def __init__(self, config):
         self.access_token = config["access_token"]
-        self.user_agent = config.get("user_agent","tap-zendesk-chat")
+        self.user_agent = config.get("user_agent", "tap-zendesk-chat")
         self.headers = {}
-        self.headers["Authorization"] =  f"Bearer {self.access_token}"
+        self.headers["Authorization"] = f"Bearer {self.access_token}"
         self.headers["User-Agent"] = self.user_agent
         self.session = requests.Session()
 
@@ -25,7 +25,7 @@ class Client:
 
             url = url or f"{BASE_URL}/api/v2/{tap_stream_id}{url_extra}"
             LOGGER.info("calling %s %s", url, params)
-            response =  self.session.get(url,headers=self.headers,params=params)
+            response = self.session.get(url, headers=self.headers, params=params)
             timer.tags[metrics.Tag.http_status_code] = response.status_code
 
         if response.status_code in [429, 502]:
