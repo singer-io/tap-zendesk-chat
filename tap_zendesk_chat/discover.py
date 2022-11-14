@@ -2,7 +2,6 @@ import singer
 from requests.exceptions import HTTPError
 from singer import metadata
 from singer.catalog import Catalog
-
 from .http import Client
 from .streams import STREAMS
 from .utils import load_schema
@@ -26,20 +25,6 @@ def account_not_authorized(client):
         raise
     return False
 
-
-def build_metadata(raw_schema: dict, stream):
-    mdata = metadata.new()
-    metadata.write(mdata, (), "valid-replication-keys", list(stream.valid_replication_keys))
-    metadata.write(mdata, (), "table-key-properties", list(stream.key_properties))
-    metadata.write(mdata, (), "forced-replication-method", stream.forced_replication_method)
-    for prop in raw_schema["properties"].keys():
-        if (prop in stream.valid_replication_keys) or (prop in stream.key_properties):
-            metadata.write(mdata, ("properties", prop), "inclusion", "automatic")
-        else:
-            metadata.write(mdata, ("properties", prop), "inclusion", "available")
-    return metadata.to_list(mdata)
-
-
 def discover(config: dict) -> Catalog:
     """discover function for tap-zendesk-chat."""
     if config:
@@ -55,7 +40,12 @@ def discover(config: dict) -> Catalog:
                 "stream": stream_name,
                 "tap_stream_id": stream.tap_stream_id,
                 "schema": schema,
-                "metadata": build_metadata(schema, stream),
+                "metadata": metadata.get_standard_metadata(
+                    schema,stream_name,
+                    list(stream.key_properties),
+                    list(stream.valid_replication_keys),
+                    stream.forced_replication_method
+                    )
             }
         )
     return Catalog.from_dict({"streams": streams})

@@ -23,7 +23,7 @@ def sync(ctx):
             LOGGER.info("Starting sync for stream: %s", tap_stream_id)
             ctx.state = set_currently_syncing(ctx.state, tap_stream_id)
             ctx.write_state()
-            write_schema(tap_stream_id, stream_schema, stream_obj.pk_fields, stream.replication_key)
+            write_schema(tap_stream_id, stream_schema, stream_obj.key_properties, stream.replication_key)
             stream_obj.sync(ctx, schema=stream_schema, stream_metadata=stream_metadata, transformer=transformer)
             ctx.write_state()
 
