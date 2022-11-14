@@ -2,13 +2,13 @@
 
 from functools import reduce
 
-from base import BaseTapTest
+from base import ZendeskChatBaseTest
 from dateutil.parser import parse
 from tap_tester import menagerie, runner
 from tap_tester.logger import LOGGER
 
 
-class StartDateTest(BaseTapTest):
+class StartDateTest(ZendeskChatBaseTest):
     """Test that the start_date configuration is respected.
 
     - verify that a sync with a later start date has at least one record

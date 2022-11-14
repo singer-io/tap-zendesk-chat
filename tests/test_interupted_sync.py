@@ -2,12 +2,12 @@
 replicated."""
 import copy
 
-from base import BaseTapTest
+from base import ZendeskChatBaseTest
 from tap_tester import connections, menagerie, runner
 from tap_tester.logger import LOGGER
 
 
-class TestZendeskChatDiscoveryInteruptibleSync(BaseTapTest):
+class TestZendeskChatDiscoveryInteruptibleSync(ZendeskChatBaseTest):
     """Test tap's ability to recover from an interrupted sync."""
 
     @staticmethod

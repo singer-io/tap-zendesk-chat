@@ -1,11 +1,11 @@
 """Test that with no fields selected for a stream automatic fields are still
 replicated."""
-from base import BaseTapTest
+from base import ZendeskChatBaseTest
 from tap_tester import connections, runner
 from tap_tester.logger import LOGGER
 
 
-class TestZendeskChatAutomaticFields(BaseTapTest):
+class TestZendeskChatAutomaticFields(ZendeskChatBaseTest):
     """Test that with no fields selected for a stream automatic fields are
     still replicated."""
 

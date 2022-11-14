@@ -2,12 +2,12 @@
 replicated."""
 from math import ceil
 
-from base import BaseTapTest
+from base import ZendeskChatBaseTest
 from tap_tester import connections, runner
 from tap_tester.logger import LOGGER
 
 
-class TestZendeskChatPagination(BaseTapTest):
+class TestZendeskChatPagination(ZendeskChatBaseTest):
     @staticmethod
     def name():
         return "tap_tester_zendesk_chat_pagination"

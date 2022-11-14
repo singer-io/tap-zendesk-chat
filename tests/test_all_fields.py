@@ -1,15 +1,28 @@
 """Test that with no fields selected for a stream automatic fields are still
 replicated."""
-from base import BaseTapTest
+from base import ZendeskChatBaseTest
 from tap_tester import connections, menagerie, runner
 
 
-class TestZendeskChatAllFields(BaseTapTest):
+class TestZendeskChatAllFields(ZendeskChatBaseTest):
     """Test that all fields selected for a stream are replicated."""
 
     @staticmethod
     def name():
         return "tap_tester_zendesk_chat_all_fields"
+
+    KNOWN_MISSING_FIELDS = {
+        "agents": {
+            "scope",
+        },
+        "account": {
+            "billing",
+        },
+        "shortcuts": {
+            "departments",
+            "agents",
+        },
+    }
 
     def test_run(self):
         """
@@ -44,6 +57,7 @@ class TestZendeskChatAllFields(BaseTapTest):
                 expected_automatic_keys = self.expected_automatic_fields().get(stream)
                 data = synced_records.get(stream)
                 actual_all_keys = set()
+                
                 for message in data["messages"]:
                     if message["action"] == "upsert":
                         actual_all_keys.update(message["data"].keys())
@@ -52,27 +66,17 @@ class TestZendeskChatAllFields(BaseTapTest):
                     expected_automatic_keys.issubset(expected_all_keys),
                     msg=f'{expected_automatic_keys-expected_all_keys} is not in "expected_all_keys"',
                 )
+
                 self.assertGreater(len(expected_all_keys), len(expected_automatic_keys))
+
                 expected_all_keys = expected_all_keys - self.KNOWN_MISSING_FIELDS.get(stream, set())
+
                 self.assertGreater(
                     record_count_by_stream.get(stream, -1),
                     0,
                     msg="The number of records is not over the stream max limit",
                 )
                 self.assertSetEqual(expected_all_keys, actual_all_keys)
-
-    KNOWN_MISSING_FIELDS = {
-        "agents": {
-            "scope",
-        },
-        "account": {
-            "billing",
-        },
-        "shortcuts": {
-            "departments",
-            "agents",
-        },
-    }
 
     def get_properties(self, original: bool = True):
         """Configuration properties required for the tap."""

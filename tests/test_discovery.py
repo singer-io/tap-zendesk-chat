@@ -1,11 +1,11 @@
 """Test tap discovery."""
 import re
 
-from base import BaseTapTest
+from base import ZendeskChatBaseTest
 from tap_tester import connections, menagerie
 
 
-class TestZendeskChatDiscovery(BaseTapTest):
+class TestZendeskChatDiscovery(ZendeskChatBaseTest):
     @staticmethod
     def name():
         return "tap_tester_tap_zendesk_chat_discovery"

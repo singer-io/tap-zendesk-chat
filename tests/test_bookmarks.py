@@ -1,10 +1,10 @@
-from base import BaseTapTest
+from base import ZendeskChatBaseTest
 from tap_tester import connections, menagerie, runner
 
 STREAMS_WITH_BOOKMARKS = ["agents", "chats"]
 
 
-class TestZendeskChatBookmarks(BaseTapTest):
+class TestZendeskChatBookmarks(ZendeskChatBaseTest):
     """Test tap sets a bookmark and respects it for the next sync of a
     stream."""
 

@@ -10,7 +10,7 @@ from typing import Dict, Set
 from tap_tester import connections, menagerie, runner
 
 
-class BaseTapTest(unittest.TestCase):
+class ZendeskChatBaseTest(unittest.TestCase):
     REPLICATION_KEYS = "valid-replication-keys"
     PRIMARY_KEYS = "table-key-properties"
     REPLICATION_METHOD = "forced-replication-method"
@@ -53,17 +53,23 @@ class BaseTapTest(unittest.TestCase):
 
         default = {
             self.PRIMARY_KEYS: {"id"},
-            self.REPLICATION_METHOD: self.FULL,
+            self.REPLICATION_METHOD: self.FULL
         }
 
-        shortcuts_rep_key = {self.PRIMARY_KEYS: {"name"}, self.REPLICATION_METHOD: self.FULL}
+        shortcuts_rep_key = {
+            self.PRIMARY_KEYS: {"name"},
+            self.REPLICATION_METHOD: self.FULL
+        }
 
-        account_rep_key = {self.PRIMARY_KEYS: {"account_key"}, self.REPLICATION_METHOD: self.FULL}
+        account_rep_key = {
+            self.PRIMARY_KEYS: {"account_key"}, 
+            self.REPLICATION_METHOD: self.FULL
+        }
 
         chats_rep_key = {
             self.PRIMARY_KEYS: {"id"},
             self.REPLICATION_KEYS: {"timestamp", "end_timestamp"},
-            self.REPLICATION_METHOD: self.INCREMENTAL,
+            self.REPLICATION_METHOD: self.INCREMENTAL
         }
 
         return {
@@ -74,7 +80,7 @@ class BaseTapTest(unittest.TestCase):
             "bans": default,
             "departments": default,
             "goals": default,
-            "account": account_rep_key,
+            "account": account_rep_key
         }
 
     def expected_streams(self):
@@ -85,7 +91,8 @@ class BaseTapTest(unittest.TestCase):
         """return a dictionary with key of table name and value as a set of
         primary key fields."""
         return {
-            table: properties.get(self.PRIMARY_KEYS, set()) for table, properties in self.expected_metadata().items()
+            table: properties.get(self.PRIMARY_KEYS, set()) 
+            for table, properties in self.expected_metadata().items()
         }
 
     def expected_replication_keys(self):
