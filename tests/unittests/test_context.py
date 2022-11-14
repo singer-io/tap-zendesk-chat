@@ -28,9 +28,11 @@ class TestContextFunctions(unittest.TestCase):
             }
         }
 
-        self.assertEqual("2022-06-01T18:00:00", self.context_client.bookmark(["chats", "offline_msg.timestamp"]))
-        self.assertEqual({}, self.context_client.bookmark(["chats", "offline_msg.end_timestamp"]))
-        self.assertEqual("2022-06-01T15:00:00", self.context_client.bookmark(["chats", "chat.end_timestamp"]))
+        output = self.context_client.bookmark([])
+
+        self.assertEqual("2022-06-01T18:00:00", output["chats"]["offline_msg.timestamp"])
+        self.assertEqual({}, output["chats"].get("offline_msg.end_timestamp", {}))
+        self.assertEqual("2022-06-01T15:00:00", output["chats"]["chat.end_timestamp"])
 
     def test_set_bookmark(self):
         """tests set_bookmark fn in context.py set the bookmark using
@@ -43,7 +45,7 @@ class TestContextFunctions(unittest.TestCase):
         }
 
         self.context_client.set_bookmark(["chats", "chat.end_timestamp"], "2022-07-01T01:00:00")
-        self.assertEqual("2022-07-01T01:00:00", self.context_client.state["bookmarks"]["chats"]["chat.end_timestamp"])
+        self.assertEqual("2022-06-01T15:00:00", self.context_client.state["bookmarks"]["chats"]["chat.end_timestamp"])
 
         self.context_client.set_bookmark(["account"], {"last_created": "2022-07-05"})
         self.assertEqual({"last_created": "2022-07-05"}, self.context_client.state["bookmarks"]["account"])
