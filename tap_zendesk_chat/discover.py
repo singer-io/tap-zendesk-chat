@@ -1,6 +1,6 @@
 import singer
 from requests.exceptions import HTTPError
-from singer import metadata
+from singer.metadata import write,to_list,to_map,get_standard_metadata
 from singer.catalog import Catalog
 from .http import Client
 from .streams import STREAMS
@@ -25,6 +25,26 @@ def account_not_authorized(client):
         raise
     return False
 
+
+def get_metadata(schema: dict, stream):
+    """
+    tweaked inbuilt singer method to also mark the replication keys as automatic fields
+    """
+    stream_metadata = get_standard_metadata(
+        **{
+            "schema": schema,
+            "key_properties": list(stream.key_properties),
+            "valid_replication_keys": list(stream.valid_replication_keys),
+            "replication_method": stream.forced_replication_method,
+        }
+    )
+    stream_metadata = to_map(stream_metadata)
+    if stream.valid_replication_keys is not None:
+        for key in stream.valid_replication_keys:
+            stream_metadata = write(stream_metadata, ("properties", key), "inclusion", "automatic")
+    stream_metadata = to_list(stream_metadata)
+    return stream_metadata
+
 def discover(config: dict) -> Catalog:
     """discover function for tap-zendesk-chat."""
     if config:
@@ -40,12 +60,7 @@ def discover(config: dict) -> Catalog:
                 "stream": stream_name,
                 "tap_stream_id": stream.tap_stream_id,
                 "schema": schema,
-                "metadata": metadata.get_standard_metadata(
-                    schema,stream_name,
-                    list(stream.key_properties),
-                    list(stream.valid_replication_keys),
-                    stream.forced_replication_method
-                    )
+                "metadata": get_metadata(schema, stream),
             }
         )
     return Catalog.from_dict({"streams": streams})
