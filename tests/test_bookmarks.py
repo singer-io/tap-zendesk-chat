@@ -12,6 +12,16 @@ class TestZendeskChatBookmarks(ZendeskChatBaseTest):
     def name():
         return "tap_tester_zendesk_chat_bookmarks"
 
+    def get_properties(self, original: bool = True):
+        """Configuration properties required for the tap."""
+        return_value = {"start_date": "2017-01-15T00:00:00Z", "agents_page_limit": 1, "chat_search_interval_days": 2}
+        if original:
+            return return_value
+
+        return_value["start_date"] = self.start_date
+
+        return return_value
+
     def test_run(self):
         """
         - Verify that for each stream you can do a sync which records bookmarks.
@@ -180,13 +190,3 @@ class TestZendeskChatBookmarks(ZendeskChatBaseTest):
 
                 # Verify at least 1 record was replicated in the second sync
                 self.assertGreater(second_sync_count, 0, msg=f"We are not fully testing bookmarking for {stream}")
-
-    def get_properties(self, original: bool = True):
-        """Configuration properties required for the tap."""
-        return_value = {"start_date": "2017-01-15T00:00:00Z", "agents_page_limit": 1, "chat_search_interval_days": 2}
-        if original:
-            return return_value
-
-        return_value["start_date"] = self.start_date
-
-        return return_value

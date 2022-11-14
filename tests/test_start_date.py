@@ -24,6 +24,17 @@ class StartDateTest(ZendeskChatBaseTest):
     def name():
         return "tap_tester_zendesk_chat_start_date_test"
 
+    def get_properties(self, original: bool = True):
+        return_value = {
+            "start_date": "2021-04-01T00:00:00Z",
+        }
+
+        if original:
+            return return_value
+
+        return_value["start_date"] = "2021-05-06T00:00:00Z"
+        return return_value
+
     def test_run(self):
         """Test we get a lot of data back based on the start date configured in
         base."""
@@ -104,14 +115,3 @@ class StartDateTest(ZendeskChatBaseTest):
 
                     except (OverflowError, ValueError, TypeError):
                         LOGGER.info("bookmarks cannot be converted to dates, " "can't test start_date for %s", stream)
-
-    def get_properties(self, original: bool = True):
-        return_value = {
-            "start_date": "2021-04-01T00:00:00Z",
-        }
-
-        if original:
-            return return_value
-
-        return_value["start_date"] = "2021-05-06T00:00:00Z"
-        return return_value

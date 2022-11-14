@@ -14,6 +14,16 @@ class TestZendeskChatDiscoveryInteruptibleSync(ZendeskChatBaseTest):
     def name():
         return "tap_tester_zendesk_chat_interrupted_sync"
 
+    def get_properties(self, original: bool = True):
+        """Configuration properties required for the tap."""
+        return_value = {"start_date": "2022-10-10T00:00:00Z", "chat_search_interval_days": 1}
+        if original:
+            return return_value
+
+        return_value["start_date"] = self.start_date
+
+        return return_value
+
     def test_run(self):
         """Testing that if a sync job is interrupted and state is saved with
         `currently_syncing`(stream) the next sync job kicks off and the tap
@@ -88,13 +98,3 @@ class TestZendeskChatDiscoveryInteruptibleSync(ZendeskChatBaseTest):
                     raise NotImplementedError(
                         f"INVALID EXPECTATIONS: STREAM: {stream} REPLICATION_METHOD: {expected_replication_method}"
                     )
-
-    def get_properties(self, original: bool = True):
-        """Configuration properties required for the tap."""
-        return_value = {"start_date": "2022-10-10T00:00:00Z", "chat_search_interval_days": 1}
-        if original:
-            return return_value
-
-        return_value["start_date"] = self.start_date
-
-        return return_value

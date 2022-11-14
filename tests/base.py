@@ -50,7 +50,6 @@ class ZendeskChatBaseTest(unittest.TestCase):
 
     def expected_metadata(self):
         """The expected streams and metadata about the streams."""
-
         default = {
             self.PRIMARY_KEYS: {"id"},
             self.REPLICATION_METHOD: self.FULL
@@ -69,7 +68,7 @@ class ZendeskChatBaseTest(unittest.TestCase):
         chats_rep_key = {
             self.PRIMARY_KEYS: {"id"},
             self.REPLICATION_KEYS: {"timestamp", "end_timestamp"},
-            self.REPLICATION_METHOD: self.INCREMENTAL
+            self.REPLICATION_METHOD: self.INCREMENTAL,
         }
 
         return {
@@ -80,22 +79,21 @@ class ZendeskChatBaseTest(unittest.TestCase):
             "bans": default,
             "departments": default,
             "goals": default,
-            "account": account_rep_key
+            "account": account_rep_key,
         }
 
-    def expected_streams(self):
+    def expected_streams(self) -> Set:
         """A set of expected stream names."""
         return set(self.expected_metadata().keys())
 
-    def expected_primary_keys(self):
+    def expected_primary_keys(self) -> Dict:
         """return a dictionary with key of table name and value as a set of
         primary key fields."""
         return {
-            table: properties.get(self.PRIMARY_KEYS, set()) 
-            for table, properties in self.expected_metadata().items()
+            table: properties.get(self.PRIMARY_KEYS, set()) for table, properties in self.expected_metadata().items()
         }
 
-    def expected_replication_keys(self):
+    def expected_replication_keys(self) -> Dict:
         """return a dictionary with key of table name and value as a set of
         replication key fields."""
         return {
@@ -103,13 +101,13 @@ class ZendeskChatBaseTest(unittest.TestCase):
             for table, properties in self.expected_metadata().items()
         }
 
-    def expected_automatic_fields(self):
+    def expected_automatic_fields(self) -> Dict:
         return {
             table: self.expected_primary_keys().get(table) | self.expected_replication_keys().get(table)
             for table in self.expected_metadata()
         }
 
-    def expected_replication_method(self):
+    def expected_replication_method(self) -> Dict:
         """return a dictionary with key of table name and value of replication
         method."""
         return {
@@ -129,7 +127,7 @@ class ZendeskChatBaseTest(unittest.TestCase):
     #   Helper Methods      #
     #########################
 
-    def run_sync(self, conn_id):
+    def run_sync(self, conn_id: int):
         """Run a sync job and make sure it exited properly.
 
         Return a dictionary with keys of streams synced and values of

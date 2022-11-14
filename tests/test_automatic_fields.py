@@ -13,6 +13,24 @@ class TestZendeskChatAutomaticFields(ZendeskChatBaseTest):
     def name():
         return "tap_tester_zendesk_chat_automatic_fields"
 
+    def get_properties(self, original: bool = True):
+        """Configuration properties required for the tap."""
+
+        return_value = {
+            "start_date": "2017-01-15T00:00:00Z",
+            "chat_search_interval_days": 500,
+        }
+
+        if original:
+            return return_value
+
+        # Start Date test needs the new connections start date to be prior to the default
+        assert self.start_date < return_value["start_date"]
+
+        # Assign start date to be the default
+        return_value["start_date"] = self.start_date
+        return return_value
+
     def test_run(self):
         """
         - Verify we can deselect all fields except when inclusion=automatic, which is handled by base.py methods
@@ -53,21 +71,3 @@ class TestZendeskChatAutomaticFields(ZendeskChatBaseTest):
                 else:
                     for actual_keys in record_messages_keys:
                         self.assertSetEqual(expected_keys, actual_keys)
-
-    def get_properties(self, original: bool = True):
-        """Configuration properties required for the tap."""
-
-        return_value = {
-            "start_date": "2017-01-15T00:00:00Z",
-            "chat_search_interval_days": 500,
-        }
-
-        if original:
-            return return_value
-
-        # Start Date test needs the new connections start date to be prior to the default
-        assert self.start_date < return_value["start_date"]
-
-        # Assign start date to be the default
-        return_value["start_date"] = self.start_date
-        return return_value

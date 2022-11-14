@@ -12,6 +12,22 @@ class TestZendeskChatPagination(ZendeskChatBaseTest):
     def name():
         return "tap_tester_zendesk_chat_pagination"
 
+    AGENTS_PAGE_SIZE = 1
+    BANS_PAGE_SIZE = 100
+
+    def get_properties(self, original: bool = True):
+        """Configuration properties required for the tap."""
+        return_value = {
+            "start_date": "2021-10-10T00:00:00Z",
+            "agents_page_limit": self.AGENTS_PAGE_SIZE,
+        }
+        if original:
+            return return_value
+
+        return_value["start_date"] = self.start_date
+
+        return return_value
+
     def test_run(self):
         """
         - Verify that for each stream you can get multiple pages of data.
@@ -69,19 +85,3 @@ class TestZendeskChatPagination(ZendeskChatBaseTest):
                             self.assertTrue(
                                 current_page.isdisjoint(other_page), msg=f"other_page_primary_keys={other_page}"
                             )
-
-    def get_properties(self, original: bool = True):
-        """Configuration properties required for the tap."""
-        return_value = {
-            "start_date": "2021-10-10T00:00:00Z",
-            "agents_page_limit": self.AGENTS_PAGE_SIZE,
-        }
-        if original:
-            return return_value
-
-        return_value["start_date"] = self.start_date
-
-        return return_value
-
-    AGENTS_PAGE_SIZE = 1
-    BANS_PAGE_SIZE = 100

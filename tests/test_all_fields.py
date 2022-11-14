@@ -24,6 +24,24 @@ class TestZendeskChatAllFields(ZendeskChatBaseTest):
         },
     }
 
+    def get_properties(self, original: bool = True):
+        """Configuration properties required for the tap."""
+
+        return_value = {
+            "start_date": "2017-01-15T00:00:00Z",
+            "chat_search_interval_days": 500,
+        }
+
+        if original:
+            return return_value
+
+        # Start Date test needs the new connections start date to be prior to the default
+        assert self.start_date < return_value["start_date"]
+
+        # Assign start date to be the default
+        return_value["start_date"] = self.start_date
+        return return_value
+
     def test_run(self):
         """
         - Verify no unexpected streams were replicated
@@ -57,7 +75,7 @@ class TestZendeskChatAllFields(ZendeskChatBaseTest):
                 expected_automatic_keys = self.expected_automatic_fields().get(stream)
                 data = synced_records.get(stream)
                 actual_all_keys = set()
-                
+
                 for message in data["messages"]:
                     if message["action"] == "upsert":
                         actual_all_keys.update(message["data"].keys())
@@ -77,21 +95,3 @@ class TestZendeskChatAllFields(ZendeskChatBaseTest):
                     msg="The number of records is not over the stream max limit",
                 )
                 self.assertSetEqual(expected_all_keys, actual_all_keys)
-
-    def get_properties(self, original: bool = True):
-        """Configuration properties required for the tap."""
-
-        return_value = {
-            "start_date": "2017-01-15T00:00:00Z",
-            "chat_search_interval_days": 500,
-        }
-
-        if original:
-            return return_value
-
-        # Start Date test needs the new connections start date to be prior to the default
-        assert self.start_date < return_value["start_date"]
-
-        # Assign start date to be the default
-        return_value["start_date"] = self.start_date
-        return return_value
