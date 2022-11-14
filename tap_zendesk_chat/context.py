@@ -2,7 +2,6 @@ from datetime import datetime
 from typing import Dict, List
 
 from singer import Catalog, write_state
-from singer.bookmarks import ensure_bookmark_path
 from singer.utils import now
 
 from .http import Client
@@ -30,7 +29,11 @@ class Context:
         """checks the state[file] for a nested path of bookmarks and returns
         value."""
         bookmark = self.bookmarks
-        return ensure_bookmark_path(bookmark, path)
+        for p in path:
+            if p not in bookmark:
+                bookmark[p] = {}
+            bookmark = bookmark[p]
+        return bookmark
 
     def set_bookmark(self, path, val):
         if isinstance(val, datetime):
