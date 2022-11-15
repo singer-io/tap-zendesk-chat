@@ -1,11 +1,11 @@
 """Test that with no fields selected for a stream automatic fields are still
 replicated."""
 import copy
+from typing import Any
 
 from base import ZendeskChatBaseTest
-from tap_tester import connections, menagerie, runner
-from tap_tester.logger import LOGGER
 from singer.utils import strptime_to_utc
+from tap_tester import connections, menagerie, runner
 
 
 class TestZendeskChatDiscoveryInteruptibleSync(ZendeskChatBaseTest):
@@ -25,27 +25,28 @@ class TestZendeskChatDiscoveryInteruptibleSync(ZendeskChatBaseTest):
 
         return return_value
 
+
     def test_run(self):
         """Testing that if a sync job is interrupted and state is saved with
         `currently_syncing`(stream) the next sync job kicks off and the tap
         picks back up on that `currently_syncing` stream.
 
         - Verify behavior is consistent when an added stream is selected between initial and resuming sync
+        - Verify only records with replication-key values greater than or equal to the stream level bookmark are
+           replicated on the resuming sync for the interrupted stream.
+        - Verify the yet-to-be-synced streams are replicated following the interrupted stream in the resuming sync.
         """
 
-        start_date = self.get_properties()["start_date"]
-        # skipping following stremas {"goals","shortcuts", "triggers"}
-        expected_streams = {"account", "agents","bans","chats","departments"}
-
+        expected_streams = self.expected_streams()
         expected_replication_methods = self.expected_replication_method()
 
         # instantiate connection
         conn_id = connections.ensure_connection(self)
 
-        # run check mode
+        # Run check mode
         found_catalogs = self.run_and_verify_check_mode(conn_id)
 
-        # table and field selection
+        # Table and field selection
         catalog_entries = [item for item in found_catalogs if item.get("stream_name") in expected_streams]
 
         self.perform_and_verify_table_and_field_selection(conn_id, catalog_entries, expected_streams)
@@ -58,37 +59,12 @@ class TestZendeskChatDiscoveryInteruptibleSync(ZendeskChatBaseTest):
 
         completed_streams = {"account", "agents", "bans"}
         interrupt_stream = "chats"
-        pending_streams = {"departments"}
-        interrupted_sync_states = copy.deepcopy(first_sync_bookmarks)
+        pending_streams = {"departments", "goals", "shortcuts", "triggers"}
+
+        interrupted_sync_states = self.create_interrupt_sync_state(
+            first_sync_bookmarks, interrupt_stream, pending_streams, first_sync_records
+        )
         bookmark_state = interrupted_sync_states["bookmarks"]
-        # set the interrupt stream as currently syncing
-        interrupted_sync_states["currently_syncing"] = interrupt_stream
-
-        # remove bookmark for completed streams to set them as pending
-        # setting value to start date wont be needed as all other streams are full_table
-        for stream in pending_streams:
-            bookmark_state.pop(stream,None)
-
-        # update state for chats stream and set the bookmark to a date earlier
-        chats_bookmark = bookmark_state.get("chats",{})
-        chats_bookmark.pop("offset",None)
-        chats_rec,offline_msgs_rec = [],[]
-        for record in first_sync_records.get("chats").get("messages"):
-            if record.get("action") == "upsert":
-                rec = record.get("data")
-                if rec["type"] == "offline_msg":
-                    offline_msgs_rec.append(rec)
-                else:
-                    chats_rec.append(rec)
-
-        # set a deffered bookmark value for both the bookmarks of chat stream 
-        if len(chats_rec) > 1:
-            chats_bookmark["chat.end_timestamp"] = chats_rec[-1]["end_timestamp"]
-        if len(offline_msgs_rec) > 1:
-            chats_bookmark["offline_msg.timestamp"] = offline_msgs_rec[-1]["timestamp"]
-
-        bookmark_state["chats"] = chats_bookmark
-        interrupted_sync_states["bookmarks"] = bookmark_state
         menagerie.set_state(conn_id, interrupted_sync_states)
 
         second_sync_record_count = self.run_and_verify_sync(conn_id)
@@ -100,9 +76,9 @@ class TestZendeskChatDiscoveryInteruptibleSync(ZendeskChatBaseTest):
                 first_sync_count = first_sync_record_count.get(stream, 0)
                 second_sync_count = second_sync_record_count.get(stream, 0)
 
-                # gather results
-                full_records = [message['data'] for message in first_sync_records[stream]['messages']]
-                interrupted_records = [message['data'] for message in second_sync_records[stream]['messages']]
+                # Gather results
+                full_records = [message["data"] for message in first_sync_records[stream]["messages"]]
+                interrupted_records = [message["data"] for message in second_sync_records[stream]["messages"]]
 
                 if expected_replication_method == self.INCREMENTAL:
 
@@ -124,16 +100,16 @@ class TestZendeskChatDiscoveryInteruptibleSync(ZendeskChatBaseTest):
                         # Verify the interrupted sync replicates the expected record set
                         # All interrupted recs are in full recs
                         for record in interrupted_records:
-                                self.assertIn(
-                                    record,
-                                    full_records,
-                                    msg='incremental table record in interrupted sync not found in full sync'
-                                )
+                            self.assertIn(
+                                record,
+                                full_records,
+                                msg="incremental table record in interrupted sync not found in full sync",
+                            )
 
                         # Verify resuming sync only replicates records with replication key values greater or equal to
-                        # the interrupted_state for streams that were replicated during the interrupted sync.    
+                        # The interrupted_state for streams that were replicated during the interrupted sync.
                         if stream == "chats":
-                           
+
                             interrupted_bmk_chat_msg = strptime_to_utc(bookmark_state["chats"]["offline_msg.timestamp"])
                             interrupted_bmk_chat = strptime_to_utc(bookmark_state["chats"]["chat.end_timestamp"])
 
@@ -147,7 +123,7 @@ class TestZendeskChatDiscoveryInteruptibleSync(ZendeskChatBaseTest):
 
                             # Record count for all streams of interrupted sync match expectations
                             full_records_after_interrupted_bookmark = 0
-                            
+
                             for record in full_records:
                                 if record["type"] == "offline_msg":
                                     rec_time = strptime_to_utc(record.get("timestamp"))
@@ -157,11 +133,11 @@ class TestZendeskChatDiscoveryInteruptibleSync(ZendeskChatBaseTest):
                                     rec_time = strptime_to_utc(record.get("end_timestamp"))
                                     if rec_time >= interrupted_bmk_chat:
                                         full_records_after_interrupted_bookmark += 1
-                            
+
                             self.assertEqual(
                                 full_records_after_interrupted_bookmark,
                                 len(interrupted_records),
-                                msg=f"Expected {full_records_after_interrupted_bookmark} records in each sync"
+                                msg=f"Expected {full_records_after_interrupted_bookmark} records in each sync",
                             )
 
                     elif stream in pending_streams:

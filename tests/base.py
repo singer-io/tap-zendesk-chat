@@ -1,11 +1,12 @@
 """Setup expectations for test sub classes Run discovery for as a prerequisite
 for most tests."""
+import copy
 import json
 import os
 import unittest
 from datetime import datetime as dt
 from datetime import timezone as tz
-from typing import Dict, Set
+from typing import Any, Dict, Set
 
 from tap_tester import connections, menagerie, runner
 
@@ -17,6 +18,11 @@ class ZendeskChatBaseTest(unittest.TestCase):
     INCREMENTAL = "INCREMENTAL"
     FULL = "FULL_TABLE"
     START_DATE_FORMAT = "%Y-%m-%dT00:00:00Z"
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.start_date = self.get_properties().get("start_date")
+        self.maxDiff = None
 
     @staticmethod
     def tap_name():
@@ -50,6 +56,7 @@ class ZendeskChatBaseTest(unittest.TestCase):
 
     def expected_metadata(self):
         """The expected streams and metadata about the streams."""
+
         default = {
             self.PRIMARY_KEYS: {"id"},
             self.REPLICATION_METHOD: self.FULL
@@ -156,7 +163,7 @@ class ZendeskChatBaseTest(unittest.TestCase):
 
         return utc
 
-    def max_bookmarks_by_stream(self, sync_records):
+    def max_bookmarks_by_stream(self, sync_records: Any):
         """Return the maximum value for the replication key for the events
         stream which is the bookmark expected value for updated records.
 
@@ -208,7 +215,7 @@ class ZendeskChatBaseTest(unittest.TestCase):
                         max_bookmarks[stream][stream_bookmark_key] = bk_value
         return max_bookmarks
 
-    def min_bookmarks_by_stream(self, sync_records):
+    def min_bookmarks_by_stream(self, sync_records: Any):
         """Return the minimum value for the replication key for each stream."""
         min_bookmarks = {}
         chats = []
@@ -254,7 +261,9 @@ class ZendeskChatBaseTest(unittest.TestCase):
                         min_bookmarks[stream][stream_bookmark_key] = bk_value
         return min_bookmarks
 
-    def select_all_streams_and_fields(self, conn_id, catalogs, select_all_fields: bool = True, exclude_streams=None):
+    def select_all_streams_and_fields(
+        self, conn_id: Any, catalogs: Any, select_all_fields: bool = True, exclude_streams=None
+    ):
         """Select all streams and all fields within streams."""
 
         for catalog in catalogs:
@@ -302,7 +311,7 @@ class ZendeskChatBaseTest(unittest.TestCase):
                     selected_fields.add(field["breadcrumb"][1])
         return selected_fields
 
-    def run_and_verify_check_mode(self, conn_id):
+    def run_and_verify_check_mode(self, conn_id: Any):
         """Run the tap in check mode and verify it succeeds. This should be ran
         prior to field selection and initial sync.
 
@@ -323,7 +332,7 @@ class ZendeskChatBaseTest(unittest.TestCase):
         self.assertEqual(len(diff), 0, msg=f"discovered schemas do not match: {diff}")
         return found_catalogs
 
-    def run_and_verify_sync(self, conn_id, clear_state=False):
+    def run_and_verify_sync(self, conn_id, clear_state: bool = False):
         """Clear the connections state in menagerie and Run a Sync. Verify the
         exit code following the sync.
 
@@ -348,7 +357,7 @@ class ZendeskChatBaseTest(unittest.TestCase):
         return record_count_by_stream
 
     def perform_and_verify_table_and_field_selection(
-        self, conn_id, found_catalogs, streams_to_select, select_all_fields=True
+        self, conn_id: Any, found_catalogs: Any, streams_to_select: Any, select_all_fields: bool = True
     ):
         """Perform table and field selection based off of the streams to select
         set and field selection parameters.
@@ -388,7 +397,7 @@ class ZendeskChatBaseTest(unittest.TestCase):
                 selected_fields = self.get_selected_fields_from_metadata(catalog_entry["metadata"])
                 self.assertEqual(expected_automatic_fields, selected_fields)
 
-    def expected_schema_keys(self, stream):
+    def expected_schema_keys(self, stream: Any):
         props = self._load_schemas(stream).get(stream).get("properties")
         if not props:
             props = self._load_schemas(stream, shared=True).get(stream).get("properties")
@@ -398,7 +407,7 @@ class ZendeskChatBaseTest(unittest.TestCase):
         return props.keys()
 
     @staticmethod
-    def _get_abs_path(path):
+    def _get_abs_path(path: str):
         return os.path.join(os.path.dirname(os.path.realpath(__file__)), path)
 
     def _load_schemas(self, stream, shared: bool = False):
@@ -413,18 +422,39 @@ class ZendeskChatBaseTest(unittest.TestCase):
 
         return schemas
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.start_date = self.get_properties().get("start_date")
-        self.maxDiff = None
+    def create_interrupt_sync_state(self, state: dict, interrupt_stream: str, pending_streams: list, sync_records: Any):
+        """Creates a state for simulating a interupted sync and backdating
+        bookmarks for interrupted stream."""
 
+        interrupted_sync_states = copy.deepcopy(state)
+        bookmark_state = interrupted_sync_states["bookmarks"]
+        # Set the interrupt stream as currently syncing
+        interrupted_sync_states["currently_syncing"] = interrupt_stream
 
-    def get_mid_point_date(self, start_date: str, bookmark_date: str) -> str:
-        """Function to find the middle date between two dates."""
-        date_format = "%Y-%m-%dT%H:%M:%S.%fZ"
-        start_date_dt = dt.strptime(start_date, date_format)
-        bookmark_date_dt = dt.strptime(bookmark_date, date_format)
-        mid_date_dt = start_date_dt.date() + (bookmark_date_dt - start_date_dt) / 2
-        # Convert datetime object to string format
-        mid_date = mid_date_dt.strftime(date_format)
-        return mid_date
+        # Remove bookmark for completed streams to set them as pending
+        # Setting value to start date wont be needed as all other streams are full_table
+        for stream in pending_streams:
+            bookmark_state.pop(stream, None)
+
+        # update state for chats stream and set the bookmark to a date earlier
+        chats_bookmark = bookmark_state.get("chats", {})
+        chats_bookmark.pop("offset", None)
+        chats_rec, offline_msgs_rec = [], []
+        for record in sync_records.get("chats").get("messages"):
+            if record.get("action") == "upsert":
+                rec = record.get("data")
+                if rec["type"] == "offline_msg":
+                    offline_msgs_rec.append(rec)
+                else:
+                    chats_rec.append(rec)
+
+        # set a deferred bookmark value for both the bookmarks of chat stream
+        chat_index = len(chats_rec) // 2 if len(chats_rec) > 1 else 0
+        chats_bookmark["chat.end_timestamp"] = chats_rec[chat_index]["end_timestamp"]
+
+        msg_index = len(offline_msgs_rec) // 2 if len(offline_msgs_rec) > 1 else 0
+        chats_bookmark["offline_msg.timestamp"] = offline_msgs_rec[msg_index]["timestamp"]
+
+        bookmark_state["chats"] = chats_bookmark
+        interrupted_sync_states["bookmarks"] = bookmark_state
+        return interrupted_sync_states
