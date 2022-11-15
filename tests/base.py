@@ -418,26 +418,6 @@ class ZendeskChatBaseTest(unittest.TestCase):
         self.start_date = self.get_properties().get("start_date")
         self.maxDiff = None
 
-    def create_interrupt_sync_state(
-        self, state: Dict, interrupt_stream: str, pending_streams: Set, start_date: str
-    ) -> Dict:
-        """This function will create a new interrupt sync bookmark state."""
-        expected_replication_keys = self.expected_replication_keys()
-        bookmark_state = state["bookmarks"]
-        if self.expected_metadata()[interrupt_stream][self.REPLICATION_METHOD] == self.INCREMENTAL:
-            replication_key = next(iter(expected_replication_keys[interrupt_stream]))
-            bookmark_date = bookmark_state[interrupt_stream][replication_key]
-            updated_bookmark_date = self.get_mid_point_date(start_date, bookmark_date)
-            bookmark_state[interrupt_stream][replication_key] = updated_bookmark_date
-        state["currently_syncing"] = interrupt_stream
-        # For pending streams, update the bookmark_value to start-date
-        for stream in iter(pending_streams):
-            # Only incremental streams should have the bookmark value
-            if self.expected_metadata()[stream][self.REPLICATION_METHOD] == self.INCREMENTAL:
-                replication_key = next(iter(expected_replication_keys[stream]))
-                bookmark_state[stream][replication_key] = start_date
-            state["bookmarks"] = bookmark_state
-        return state
 
     def get_mid_point_date(self, start_date: str, bookmark_date: str) -> str:
         """Function to find the middle date between two dates."""
