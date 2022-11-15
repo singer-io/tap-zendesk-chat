@@ -1,8 +1,5 @@
 """Test that with no fields selected for a stream automatic fields are still
 replicated."""
-import copy
-from typing import Any
-
 from base import ZendeskChatBaseTest
 from singer.utils import strptime_to_utc
 from tap_tester import connections, menagerie, runner
@@ -24,7 +21,6 @@ class TestZendeskChatDiscoveryInteruptibleSync(ZendeskChatBaseTest):
         return_value["start_date"] = self.start_date
 
         return return_value
-
 
     def test_run(self):
         """Testing that if a sync job is interrupted and state is saved with

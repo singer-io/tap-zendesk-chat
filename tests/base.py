@@ -423,7 +423,7 @@ class ZendeskChatBaseTest(unittest.TestCase):
         return schemas
 
     def create_interrupt_sync_state(self, state: dict, interrupt_stream: str, pending_streams: list, sync_records: Any):
-        """Creates a state for simulating a interupted sync and backdating
+        """Creates a state for simulating a interrupted sync and backdating
         bookmarks for interrupted stream."""
 
         interrupted_sync_states = copy.deepcopy(state)
