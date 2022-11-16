@@ -65,9 +65,17 @@ class TestZendeskChatAutomaticFields(ZendeskChatBaseTest):
                     msg="The number of records is not over the stream max limit",
                 )
                 if stream == "chats":
+                    # chats stream has two types of records "offline_msgs" and "chat" both of them have different replication keys
+                    # the key "end_timestamp" is not available for "offline_msgs" 
+                    # hence we need to verify the record has both or atleaset one key
                     expected_keys_offline_msg = self.expected_automatic_fields().get(stream) - {"end_timestamp"}
                     for actual_keys in record_messages_keys:
-                        self.assertTrue(actual_keys == expected_keys_offline_msg or actual_keys == expected_keys)
+                        if actual_keys == expected_keys:
+                            pass
+                        elif actual_keys == expected_keys_offline_msg:
+                            pass
+                        else:
+                            self.fail(f"Record of type: chat does not have the following automatic fields {expected_keys_offline_msg-actual_keys}")
                 else:
                     for actual_keys in record_messages_keys:
                         self.assertSetEqual(expected_keys, actual_keys)

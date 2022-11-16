@@ -37,8 +37,9 @@ class TestZendeskChatPagination(ZendeskChatBaseTest):
         """
 
         page_size = int(self.get_properties().get("agents_page_limit", 10))
-        expected_streams = {"bans", "agents"}
         # only "bans" and "agents" stream support pagination
+        expected_streams = {"bans", "agents"}
+
         # instantiate connection
         conn_id = connections.ensure_connection(self)
 
@@ -58,23 +59,25 @@ class TestZendeskChatPagination(ZendeskChatBaseTest):
                 page_size = self.BANS_PAGE_SIZE if stream == "bans" else self.AGENTS_PAGE_SIZE
                 # expected values
                 expected_primary_keys = self.expected_primary_keys()
-                # collect information for assertions from syncs 1 & 2 base on expected values
                 primary_keys_list = [
                     tuple(message.get("data").get(expected_pk) for expected_pk in expected_primary_keys[stream])
                     for message in synced_records.get(stream).get("messages")
                     if message.get("action") == "upsert"
                 ]
-                LOGGER.info("stream: %s pk_list %s", stream, primary_keys_list)
+                rec_count = len(primary_keys_list)
+
                 # verify records are more than page size so multiple page is working
+                self.assertGreater(rec_count,page_size,msg="The number of records is not over the stream max limit")
+
                 # Chunk the replicated records (just primary keys) into expected pages
                 pages = []
-                page_count = ceil(len(primary_keys_list) / page_size)
+                page_count = ceil(rec_count / page_size)
                 for page_index in range(page_count):
                     page_start = page_index * page_size
                     page_end = (page_index + 1) * page_size
                     pages.append(set(primary_keys_list[page_start:page_end]))
 
-                LOGGER.info("items: %s page_count %s", len(primary_keys_list), page_count)
+                LOGGER.info("items: %s page_count %s", rec_count, page_count)
 
                 # Verify by primary keys that data is unique for each page
                 for current_index, current_page in enumerate(pages):
@@ -82,6 +85,7 @@ class TestZendeskChatPagination(ZendeskChatBaseTest):
                         for other_index, other_page in enumerate(pages):
                             if current_index == other_index:
                                 continue  # don't compare the page to itself
-                            self.assertTrue(
-                                current_page.isdisjoint(other_page), msg=f"other_page_primary_keys={other_page}"
+                            self.assertTrue(    
+                                current_page.isdisjoint(other_page),
+                                msg=f"other_page_primary_keys={other_page}"
                             )

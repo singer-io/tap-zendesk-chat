@@ -16,11 +16,13 @@ class TestZendeskChatDiscovery(ZendeskChatBaseTest):
 
         - Verify number of actual streams discovered match expected
         - Verify the stream names discovered were what we expect
-        - Verify stream names follow naming convention streams should only have lowercase alphas and underscores
+        - Verify stream names follow naming convention (streams should only have lowercase alphas and underscores_
         - verify there is only 1 top level breadcrumb
+        - verify replication key(s)
         - verify primary key(s)
-        - verify that primary keys are given the inclusion of automatic.
-        - verify that all other fields have inclusion of available metadata.
+        - verify the actual replication matches our expected replication method
+        - verify that primary, replication and foreign keys are given the inclusion of automatic (metadata and annotated schema).
+        - verify that all other fields have inclusion of available (metadata and schema)
         """
         conn_id = connections.ensure_connection(self)
 

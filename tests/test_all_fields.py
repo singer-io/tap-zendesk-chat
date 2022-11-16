@@ -81,17 +81,15 @@ class TestZendeskChatAllFields(ZendeskChatBaseTest):
                         actual_all_keys.update(message["data"].keys())
 
                 self.assertTrue(
-                    expected_automatic_keys.issubset(expected_all_keys),
-                    msg=f'{expected_automatic_keys-expected_all_keys} is not in "expected_all_keys"',
+                    expected_automatic_keys.issubset(actual_all_keys),
+                    msg=f'{expected_automatic_keys-actual_all_keys} is not in "expected_all_keys"',
                 )
-
-                self.assertGreater(len(expected_all_keys), len(expected_automatic_keys))
-
-                expected_all_keys = expected_all_keys - self.KNOWN_MISSING_FIELDS.get(stream, set())
 
                 self.assertGreater(
                     record_count_by_stream.get(stream, -1),
                     0,
                     msg="The number of records is not over the stream max limit",
                 )
+                expected_all_keys = expected_all_keys - self.KNOWN_MISSING_FIELDS.get(stream, set())
+                self.assertGreaterEqual(len(expected_all_keys), len(actual_all_keys))
                 self.assertSetEqual(expected_all_keys, actual_all_keys)
