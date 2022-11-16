@@ -103,10 +103,10 @@
       "$ref": "chat_response_time"
     },
     "session": {
-        "type": [
-          "null",
-          "object"
-        ]
+      "type": [
+        "null",
+        "object"
+      ]
     },
     "history": {
       "items": {

@@ -1,61 +1,51 @@
-"""
-Test that the start_date configuration is respected
-"""
+"""Test that the start_date configuration is respected."""
 
 from functools import reduce
 
-import os
-
+from base import ZendeskChatBaseTest
 from dateutil.parser import parse
-
-from tap_tester import menagerie, runner, connections
-
-from base import BaseTapTest
+from tap_tester import menagerie, runner
+from tap_tester.logger import LOGGER
 
 
-class StartDateTest(BaseTapTest):
+class StartDateTest(ZendeskChatBaseTest):
+    """Test that the start_date configuration is respected.
+
+    - verify that a sync with a later start date has at least one record
+      synced and less records than the 1st sync with a previous start date
+    - verify that each stream has less records than the earlier
+      start date sync
+    - verify all data from later start data has bookmark values >= start_date
+    - verify that the minimum bookmark sent to the target for the later
+      start_date sync is >= start date
     """
-    Test that the start_date configuration is respected
-
-    • verify that a sync with a later start date has at least one record synced
-      and less records than the 1st sync with a previous start date
-    • verify that each stream has less records than the earlier start date sync
-    • verify all data from later start data has bookmark values >= start_date
-    • verify that the minimum bookmark sent to the target for the later start_date sync
-      is greater than or equal to the start date
-    """
-
-    def get_properties(self, original: bool = True):
-        return_value = {
-            'start_date': '2021-04-01T00:00:00Z',
-        }
-
-        if original:
-            return return_value
-
-        return_value["start_date"] = '2021-05-06T00:00:00Z'
-        return return_value
-
-    @staticmethod
-    def get_credentials(original_credentials: bool = True):
-        return {
-            'access_token': os.getenv('TAP_ZENDESK_CHAT_ACCESS_TOKEN')
-        }
 
     @staticmethod
     def name():
         return "tap_tester_zendesk_chat_start_date_test"
 
+    def get_properties(self, original: bool = True):
+        return_value = {
+            "start_date": "2021-04-01T00:00:00Z",
+        }
+
+        if original:
+            return return_value
+
+        return_value["start_date"] = "2021-05-06T00:00:00Z"
+        return return_value
+
     def test_run(self):
-        """Test we get a lot of data back based on the start date configured in base"""
+        """Test we get a lot of data back based on the start date configured in
+        base."""
         conn_id = self.create_connection()
 
         found_catalogs = menagerie.get_catalogs(conn_id)
-        incremental_streams = {key for key, value in self.expected_replication_method().items()
-                               if value == self.INCREMENTAL}
+        incremental_streams = {
+            key for key, value in self.expected_replication_method().items() if value == self.INCREMENTAL
+        }
 
-        our_catalogs = [catalog for catalog in found_catalogs if
-                        catalog.get('tap_stream_id') in incremental_streams]
+        our_catalogs = [catalog for catalog in found_catalogs if catalog.get("tap_stream_id") in incremental_streams]
         # Select all streams and all fields within streams
         self.select_all_streams_and_fields(conn_id, our_catalogs, select_all_fields=True)
 
@@ -86,8 +76,7 @@ class StartDateTest(BaseTapTest):
 
         # Select all streams and all fields within streams
         found_catalogs = menagerie.get_catalogs(conn_id)
-        our_catalogs = [catalog for catalog in found_catalogs if
-                        catalog.get('tap_stream_id') in incremental_streams]
+        our_catalogs = [catalog for catalog in found_catalogs if catalog.get("tap_stream_id") in incremental_streams]
         self.select_all_streams_and_fields(conn_id, our_catalogs, select_all_fields=True)
 
         # Run a sync job using orchestrator
@@ -107,7 +96,8 @@ class StartDateTest(BaseTapTest):
                 self.assertGreaterEqual(
                     first_sync_record_count.get(stream, 0),
                     second_sync_record_count.get(stream, 0),
-                    msg="second had more records, start_date usage not verified")
+                    msg="second had more records, start_date usage not verified",
+                )
 
                 # verify all data from 2nd sync >= start_date
                 target_mark = second_min_bookmarks.get(stream, {"mark": None})
@@ -121,9 +111,7 @@ class StartDateTest(BaseTapTest):
 
                         # verify that the minimum bookmark sent to the target for the second sync
                         # is greater than or equal to the start date
-                        self.assertGreaterEqual(target_value,
-                                                self.local_to_utc(parse(self.start_date)))
+                        self.assertGreaterEqual(target_value, self.local_to_utc(parse(self.start_date)))
 
                     except (OverflowError, ValueError, TypeError):
-                        print("bookmarks cannot be converted to dates, "
-                              "can't test start_date for {}".format(stream))
+                        LOGGER.info("bookmarks cannot be converted to dates, " "can't test start_date for %s", stream)

@@ -1,22 +1,33 @@
 from datetime import datetime
-import singer
+from typing import Dict, List
+
+from singer import Catalog, write_state
+from singer.utils import now
+
 from .http import Client
 
+
 class Context:
-    def __init__(self, config, state, catalog):
+    """Wrapper Class Around state bookmarking."""
+
+    def __init__(self, config: Dict, state: Dict, catalog: Catalog):
         self.config = config
         self.state = state
         self.catalog = catalog
         self.client = Client(config)
-        self.now = datetime.utcnow()
+        self.now = now()
 
     @property
     def bookmarks(self):
+        """Provides read-only access to bookmarks, creates one if does not
+        exist."""
         if "bookmarks" not in self.state:
             self.state["bookmarks"] = {}
         return self.state["bookmarks"]
 
-    def bookmark(self, path):
+    def bookmark(self, path: List):
+        """checks the state[file] for a nested path of bookmarks and returns
+        value."""
         bookmark = self.bookmarks
         for p in path:
             if p not in bookmark:
@@ -37,4 +48,4 @@ class Context:
         return val
 
     def write_state(self):
-        singer.write_state(self.state)
+        write_state(self.state)
