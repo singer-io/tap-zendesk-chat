@@ -1,4 +1,22 @@
 # Changelog
+## 0.4.0
+
+  * Code Refactoring [#45](https://github.com/singer-io/tap-zendesk-chat/pull/45)
+    - Improved directory structure
+    - Added pagination support to BANS stream
+    - Adding Missing fields in `chats`, `shortcuts` & `bans` stream
+    - Upodated unit tests
+    - pre-commit integrated
+
+  * Fixes Following issues
+    -  https://github.com/singer-io/tap-zendesk-chat/issues/43
+    - https://github.com/singer-io/tap-zendesk-chat/issues/22
+    - https://github.com/singer-io/tap-zendesk-chat/issues/21
+    - https://github.com/singer-io/tap-zendesk-chat/issues/17
+
+  * Added Integration Tests [#47](https://github.com/singer-io/tap-zendesk-chat/pull/47)
+
+
 ## 0.3.2
   * Resolved transform error [#41](https://github.com/singer-io/tap-zendesk-chat/pull/41)
 ## 0.3.1
