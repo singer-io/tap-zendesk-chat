@@ -9,7 +9,7 @@
     - pre-commit integrated
 
   * Fixes Following issues
-    -  https://github.com/singer-io/tap-zendesk-chat/issues/43
+    - https://github.com/singer-io/tap-zendesk-chat/issues/43
     - https://github.com/singer-io/tap-zendesk-chat/issues/22
     - https://github.com/singer-io/tap-zendesk-chat/issues/21
     - https://github.com/singer-io/tap-zendesk-chat/issues/17
