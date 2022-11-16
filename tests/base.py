@@ -43,7 +43,7 @@ class ZendeskChatBaseTest(unittest.TestCase):
             return return_value
 
         # Start Date test needs the new connections start date to be prior to the default
-        assert self.start_date < return_value["start_date"]
+        self.assertTrue(self.start_date < return_value["start_date"])
 
         # Assign start date to be the default
         return_value["start_date"] = self.start_date
@@ -68,7 +68,7 @@ class ZendeskChatBaseTest(unittest.TestCase):
         }
 
         account_rep_key = {
-            self.PRIMARY_KEYS: {"account_key"}, 
+            self.PRIMARY_KEYS: {"account_key"},
             self.REPLICATION_METHOD: self.FULL
         }
 

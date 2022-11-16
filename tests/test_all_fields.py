@@ -36,7 +36,7 @@ class TestZendeskChatAllFields(ZendeskChatBaseTest):
             return return_value
 
         # Start Date test needs the new connections start date to be prior to the default
-        assert self.start_date < return_value["start_date"]
+        self.assertTrue(self.start_date < return_value["start_date"])
 
         # Assign start date to be the default
         return_value["start_date"] = self.start_date
