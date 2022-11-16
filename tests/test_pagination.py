@@ -67,7 +67,7 @@ class TestZendeskChatPagination(ZendeskChatBaseTest):
                 rec_count = len(primary_keys_list)
 
                 # verify records are more than page size so multiple page is working
-                self.assertGreater(rec_count,page_size,msg="The number of records is not over the stream max limit")
+                self.assertGreater(rec_count, page_size, msg="The number of records is not over the stream max limit")
 
                 # Chunk the replicated records (just primary keys) into expected pages
                 pages = []
@@ -85,7 +85,6 @@ class TestZendeskChatPagination(ZendeskChatBaseTest):
                         for other_index, other_page in enumerate(pages):
                             if current_index == other_index:
                                 continue  # don't compare the page to itself
-                            self.assertTrue(    
-                                current_page.isdisjoint(other_page),
-                                msg=f"other_page_primary_keys={other_page}"
+                            self.assertTrue(
+                                current_page.isdisjoint(other_page), msg=f"other_page_primary_keys={other_page}"
                             )

@@ -2,7 +2,6 @@
 replicated."""
 from base import ZendeskChatBaseTest
 from tap_tester import connections, runner
-from tap_tester.logger import LOGGER
 
 
 class TestZendeskChatAutomaticFields(ZendeskChatBaseTest):
@@ -66,7 +65,7 @@ class TestZendeskChatAutomaticFields(ZendeskChatBaseTest):
                 )
                 if stream == "chats":
                     # chats stream has two types of records "offline_msgs" and "chat" both of them have different replication keys
-                    # the key "end_timestamp" is not available for "offline_msgs" 
+                    # the key "end_timestamp" is not available for "offline_msgs"
                     # hence we need to verify the record has both or atleaset one key
                     expected_keys_offline_msg = self.expected_automatic_fields().get(stream) - {"end_timestamp"}
                     for actual_keys in record_messages_keys:
@@ -75,7 +74,9 @@ class TestZendeskChatAutomaticFields(ZendeskChatBaseTest):
                         elif actual_keys == expected_keys_offline_msg:
                             pass
                         else:
-                            self.fail(f"Record of type: chat does not have the following automatic fields {expected_keys_offline_msg-actual_keys}")
+                            self.fail(
+                                f"Record of type: chat does not have the following automatic fields {expected_keys_offline_msg-actual_keys}"
+                            )
                 else:
                     for actual_keys in record_messages_keys:
                         self.assertSetEqual(expected_keys, actual_keys)
