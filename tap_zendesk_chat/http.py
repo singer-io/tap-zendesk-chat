@@ -18,7 +18,8 @@ class Client:
         self.headers["Authorization"] = f"Bearer {self.access_token}"
         self.headers["User-Agent"] = self.user_agent
         if "subdomain" in config:
-            self.base_url = f"https://{config['subdomain']}.zendesk.com"
+            self.base_url =  BASE_URL
+            # self.base_url = f"https://{config['subdomain']}.zendesk.com"
         else:
             self.base_url =  BASE_URL
             LOGGER.warning("Missing Subdomain, please recheck the configuration")
