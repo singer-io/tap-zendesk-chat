@@ -40,6 +40,9 @@ class Client:
             (f"https://{self.subdomain}.zendesk.com" , "/api/v2/chat/agents"),
             (BASE_URL , "/api/v2/agents")
         ]
+        if not self.subdomain:
+            # return base url incase of missing subdomain
+            return BASE_URL
         for domain, endpoint in urls:
             resp = requests.get(f"{domain}{endpoint}", headers=self.headers)
             LOGGER.info("API CHECK %s %s", resp.url, resp.status_code)
