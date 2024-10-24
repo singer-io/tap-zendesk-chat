@@ -44,7 +44,7 @@ class Client:
             # return base url incase of missing subdomain
             return BASE_URL
         for domain, endpoint in urls:
-            resp = requests.get(f"{domain}{endpoint}", headers=self.headers)
+            resp = requests.get(f"{domain}{endpoint}", headers=self.headers, timeout=25)
             LOGGER.info("API CHECK %s %s", resp.url, resp.status_code)
             if resp.status_code == 200:
                 return domain

@@ -21,7 +21,7 @@ jobs:
           command: |
             source dev_env.sh
             source /usr/local/share/virtualenvs/tap-zendesk-chat/bin/activate
-            pylint tap_zendesk_chat -d "$PYLINT_DISABLE_LIST,no-self-use"
+            pylint tap_zendesk_chat -d "$PYLINT_DISABLE_LIST"
       - run:
           name: 'JSON Validator'
           command: |
