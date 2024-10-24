@@ -116,6 +116,7 @@ class Chats(BaseStream):
         body = ctx.client.request(self.tap_stream_id, params=params)
         return list(body["docs"].values())
 
+    # pylint: disable=too-many-positional-arguments
     def _pull(self, ctx, chat_type, ts_field, full_sync, schema: Dict, stream_metadata: Dict, transformer: Transformer):
         """Pulls and writes pages of data for the given chat_type, where
         chat_type can be either "chat" or "offline_msg".
