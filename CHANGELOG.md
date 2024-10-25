@@ -6,7 +6,7 @@
 ## 0.4.1
   * Dependabot update [#50](https://github.com/singer-io/tap-zendesk-chat/pull/50)
 
-
+## 0.4.0
   * Code Refactoring [#45](https://github.com/singer-io/tap-zendesk-chat/pull/45)
     - Improved directory structure
     - Added pagination support to BANS stream
