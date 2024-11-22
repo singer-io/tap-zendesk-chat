@@ -11,7 +11,7 @@ setup(
     py_modules=["tap_zendesk_chat"],
     install_requires=[
         "singer-python==5.12.1",
-        "requests==2.31.0",
+        "requests==2.32.0",
     ],
     extras_require={"dev": ["pylint", "ipdb", "nose"]},
     entry_points="""
