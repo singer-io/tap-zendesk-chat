@@ -145,7 +145,7 @@ class Chats(BaseStream):
                 if next_url:
                     search_resp = ctx.client.request(self.tap_stream_id, url=next_url)
                 else:
-                    params = {"q": f"type:{chat_type} AND {ts_field}:[{start_dt.isoformat()} TO {end_dt.isoformat()}]"}
+                    params = {"q": f"type:{chat_type} AND {ts_field}:[{start_dt.replace(tzinfo=None).isoformat()} TO {end_dt.replace(tzinfo=None).isoformat()}]"}
                     search_resp = ctx.client.request(self.tap_stream_id, params=params, url_extra="/search")
 
                 next_url = search_resp["next_url"]

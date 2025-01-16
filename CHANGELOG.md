@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.5.1
+  * Bug Fix with chats stream [#54](https://github.com/singer-io/tap-zendesk-chat/pull/54)
+  * Dependabot update
+
 ## 0.5.0
   * Zendesk Domain Change [#52](https://github.com/singer-io/tap-zendesk-chat/pull/52)
 
