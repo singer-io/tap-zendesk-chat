@@ -9,6 +9,9 @@ BASE_URL = "https://www.zopim.com"
 class RateLimitException(Exception):
     pass
 
+class ResourceDeletedError(Exception):
+    pass
+
 class InvalidConfigurationError(Exception):
     pass
 
@@ -24,6 +27,7 @@ class Client:
         self.base_url = self.get_base_url()
         self.session = requests.Session()
 
+    @backoff.on_exception(backoff.expo, ResourceDeletedError, max_tries=10, factor=2)
     def get_base_url(self):
         """
         Determines the base URL to use for Zendesk API requests.
@@ -46,11 +50,13 @@ class Client:
         for domain, endpoint in urls:
             resp = requests.get(f"{domain}{endpoint}", headers=self.headers, timeout=25)
             LOGGER.info("API CHECK %s %s", resp.url, resp.status_code)
-            if resp.status_code == 200:
+            if resp.status_code == 410:
+                raise ResourceDeletedError()
+            elif resp.status_code == 200:
                 return domain
         raise InvalidConfigurationError("Please check the URL or reauthenticate")
 
-    @backoff.on_exception(backoff.expo, RateLimitException, max_tries=10, factor=2)
+    @backoff.on_exception(backoff.expo, (RateLimitException, ResourceDeletedError), max_tries=10, factor=2)
     def request(self, tap_stream_id, params=None, url=None, url_extra=""):
         with metrics.http_request_timer(tap_stream_id) as timer:
             if self.base_url == BASE_URL:
@@ -63,6 +69,8 @@ class Client:
 
         if response.status_code in [429, 502]:
             raise RateLimitException()
+        elif response.status_code == 410:
+            raise ResourceDeletedError()
         elif response.status_code == 400:
             LOGGER.warning(
                 "The amount of data present for in %s stream is huge,\
