@@ -1,7 +1,7 @@
 # Changelog
 
 ## 0.5.2
-  * Bump dependency versions for twistlock compliance [#56](https://github.com/singer-io/tap-zendesk-chat/pull/56)
+  * Bump dependency versions for twistlock compliance [#55](https://github.com/singer-io/tap-zendesk-chat/pull/55)
 
 ## 0.5.1
   * Bug Fix with chats stream [#54](https://github.com/singer-io/tap-zendesk-chat/pull/54)
