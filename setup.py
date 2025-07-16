@@ -3,7 +3,7 @@ from setuptools import find_packages, setup
 
 setup(
     name="tap-zendesk-chat",
-    version="0.5.1",
+    version="0.5.2",
     description="Singer.io tap for extracting data from the Zendesk Chat API",
     author="Stitch",
     url="https://singer.io",
