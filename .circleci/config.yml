@@ -5,23 +5,21 @@ orbs:
 jobs:
   build:
     docker:
-      - image: 218546966473.dkr.ecr.us-east-1.amazonaws.com/circle-ci:stitch-tap-tester
+      - image: 218546966473.dkr.ecr.us-east-1.amazonaws.com/circle-ci:stitch-tap-tester-uv
     steps:
       - checkout
       - run:
           name: 'Setup virtual env'
           command: |
-            aws s3 cp s3://com-stitchdata-dev-deployment-assets/environments/tap-tester/tap_tester_sandbox dev_env.sh
-            python3 -mvenv /usr/local/share/virtualenvs/tap-zendesk-chat
+            uv venv --python 3.9 /usr/local/share/virtualenvs/tap-zendesk-chat
             source /usr/local/share/virtualenvs/tap-zendesk-chat/bin/activate
-            pip install -U 'pip<19.2' 'setuptools<51.0.0'
-            pip install .[dev]
+            uv pip install -U 'pip<19.2' 'setuptools<51.0.0'
+            uv pip install .[dev]
       - run:
           name: 'pylint'
           command: |
-            source dev_env.sh
             source /usr/local/share/virtualenvs/tap-zendesk-chat/bin/activate
-            pylint tap_zendesk_chat -d "$PYLINT_DISABLE_LIST"
+            pylint tap_zendesk_chat -d broad-except,broad-exception-caught,broad-exception-raised,chained-comparison,empty-docstring,fixme,invalid-name,line-too-long,missing-class-docstring,missing-function-docstring,missing-module-docstring,no-else-raise,no-else-return,too-few-public-methods,too-many-arguments,too-many-branches,too-many-lines,too-many-locals,ungrouped-imports,wrong-spelling-in-comment,wrong-spelling-in-docstring,consider-using-f-string,logging-fstring-interpolation,wrong-import-order,missing-module-docstring,missing-function-docstring
       - run:
           name: 'JSON Validator'
           command: |
@@ -31,8 +29,9 @@ jobs:
           name: 'Unit Tests'
           command: |
             source /usr/local/share/virtualenvs/tap-zendesk-chat/bin/activate
-            pip install coverage
-            nosetests --with-coverage --cover-erase --cover-package=tap_zendesk_chat --cover-html-dir=htmlcov tests/unittests
+            uv pip install pytest coverage
+            coverage run -m pytest tests/unittests
+            coverage html
       - store_test_results:
           path: test_output/report.xml
       - store_artifacts:
@@ -40,8 +39,10 @@ jobs:
       - run:
           name: 'Integration Tests'
           command: |
-            source dev_env.sh
             source /usr/local/share/virtualenvs/tap-tester/bin/activate
+            uv pip install --upgrade awscli
+            aws s3 cp s3://com-stitchdata-dev-deployment-assets/environments/tap-tester/tap_tester_sandbox dev_env.sh
+            source dev_env.sh
             run-test --tap=tap-zendesk-chat tests
       - slack/status:
           channel: 'stitch-tap-tester-tests'
