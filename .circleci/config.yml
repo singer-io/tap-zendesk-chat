@@ -19,7 +19,7 @@ jobs:
           name: 'pylint'
           command: |
             source /usr/local/share/virtualenvs/tap-zendesk-chat/bin/activate
-	    echo "$PYLINT_DISABLE_LIST"
+            echo "$PYLINT_DISABLE_LIST"
             pylint tap_zendesk_chat -d "$PYLINT_DISABLE_LIST,missing-module-docstring,missing-function-docstring"
       - run:
           name: 'JSON Validator'
