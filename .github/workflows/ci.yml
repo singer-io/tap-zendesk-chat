@@ -1,0 +1,70 @@
+name: CI
+
+on:
+  push:
+  schedule:
+    - cron: "0 14 * * *"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container:
+      image: 218546966473.dkr.ecr.us-east-1.amazonaws.com/circle-ci:stitch-tap-tester-uv
+    if: ${{ github.event_name != 'schedule' || github.ref == 'refs/heads/master' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup virtual env
+        run: |
+          uv venv --python 3.12 /usr/local/share/virtualenvs/tap-zendesk-chat
+          source /usr/local/share/virtualenvs/tap-zendesk-chat/bin/activate
+          uv pip install -U 'pip<19.2' 'setuptools<51.0.0'
+          uv pip install .[dev]
+
+      - name: pylint
+        run: |
+          source /usr/local/share/virtualenvs/tap-zendesk-chat/bin/activate
+          pylint tap_zendesk_chat -d broad-except,broad-exception-caught,broad-exception-raised,chained-comparison,empty-docstring,fixme,invalid-name,line-too-long,missing-class-docstring,missing-function-docstring,missing-module-docstring,no-else-raise,no-else-return,too-few-public-methods,too-many-arguments,too-many-branches,too-many-lines,too-many-locals,ungrouped-imports,wrong-spelling-in-comment,wrong-spelling-in-docstring,consider-using-f-string,logging-fstring-interpolation,wrong-import-order,missing-module-docstring,missing-function-docstring
+
+      - name: JSON Validator
+        run: |
+          source /usr/local/share/virtualenvs/tap-tester/bin/activate
+          stitch-validate-json tap_zendesk_chat/schemas/*.json
+
+      - name: Unit Tests
+        run: |
+          source /usr/local/share/virtualenvs/tap-zendesk-chat/bin/activate
+          uv pip install pytest coverage
+          coverage run -m pytest tests/unittests
+          coverage html
+
+      - name: Store test results
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: test_output/report.xml
+
+      - name: Store artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: htmlcov
+          path: htmlcov
+
+      - name: Integration Tests
+        run: |
+          source /usr/local/share/virtualenvs/tap-tester/bin/activate
+          uv pip install --upgrade awscli
+          aws s3 cp s3://com-stitchdata-dev-deployment-assets/environments/tap-tester/tap_tester_sandbox dev_env.sh
+          source dev_env.sh
+          run-test --tap=tap-zendesk-chat tests
+
+      - name: slack/status
+        if: ${{ failure() && github.ref == 'refs/heads/master' }}
+        uses: slackapi/slack-github-action@v4
+        with:
+          channel: stitch-tap-tester-tests
+          mentions: "${CIRCLE_USERNAME}"
+          fail_only: true
+          only_for_branches: master
+          failure_message: |
+            :red_circle: ${CIRCLE_JOB} failed!
