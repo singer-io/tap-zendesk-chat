@@ -1,5 +1,9 @@
 # Changelog
 
+# 0.5.3
+  * Bump requests to 2.33.0 for security updates [#60](https://github.com/singer-io/tap-zendesk-chat/pull/60)
+
+
 ## 0.5.2
   * Bump dependency versions for twistlock compliance [#55](https://github.com/singer-io/tap-zendesk-chat/pull/55)
 
