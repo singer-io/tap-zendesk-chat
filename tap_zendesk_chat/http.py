@@ -65,8 +65,9 @@ class Client:
             raise RateLimitException()
         elif response.status_code == 400:
             LOGGER.warning(
-                "The amount of data present for in %s stream is huge,\
-                The api has a pagination limit of 251 pages, please reduce the search window for this stream"
+                "The amount of data present for in %s stream is huge. "
+                "The api has a pagination limit of 251 pages, please reduce the search window for this stream",
+                tap_stream_id
             )
         response.raise_for_status()
         return response.json()
