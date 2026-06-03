@@ -18,9 +18,9 @@ def account_not_authorized(client):
     except HTTPError as err:
         if err.response.status_code == 403:
             LOGGER.info(
-                "Ignoring 403 from account endpoint - this must be an \
-                integrated Zendesk account. This endpoint will be excluded \
-                from discovery"
+                "Ignoring 403 from account endpoint - this must be an "
+                "integrated Zendesk account. This endpoint will be excluded "
+                "from discovery"
             )
             return True
         raise
